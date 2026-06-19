@@ -1,0 +1,10 @@
+# 后端镜像构建不需要本地依赖、编译产物和敏感环境文件。
+node_modules
+dist
+.git
+.codex
+.env
+uploads/*
+!uploads/.gitkeep
+*.log
+npm-debug.log*

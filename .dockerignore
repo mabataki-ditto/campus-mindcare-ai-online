@@ -1,0 +1,9 @@
+# 根目录构建上下文的通用忽略规则。
+**/node_modules
+**/dist
+**/dev-dist
+**/.git
+**/.codex
+**/.env
+**/*.log
+**/npm-debug.log*

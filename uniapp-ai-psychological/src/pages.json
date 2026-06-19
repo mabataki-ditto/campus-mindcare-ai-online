@@ -1,0 +1,83 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": { "navigationBarTitleText": "首页", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/consultation/index",
+      "style": {
+        "navigationBarTitleText": "AI 陪伴",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/emotion/diary",
+      "style": { "navigationBarTitleText": "情绪日记" }
+    },
+    {
+      "path": "pages/knowledge/index",
+      "style": { "navigationBarTitleText": "知识库" }
+    },
+    {
+      "path": "pages/knowledge/detail",
+      "style": { "navigationBarTitleText": "文章详情" }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": { "navigationBarTitleText": "登录", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/auth/register",
+      "style": { "navigationBarTitleText": "注册" }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "校园AI心理陪伴",
+    "navigationBarBackgroundColor": "#4A90D9",
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "color": "#909399",
+    "selectedColor": "#4A90D9",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/consultation/index",
+        "text": "AI陪伴",
+        "iconPath": "static/icons/chat.png",
+        "selectedIconPath": "static/icons/chat-active.png"
+      },
+      {
+        "pagePath": "pages/emotion/diary",
+        "text": "日记",
+        "iconPath": "static/icons/diary.png",
+        "selectedIconPath": "static/icons/diary-active.png"
+      },
+      {
+        "pagePath": "pages/knowledge/index",
+        "text": "知识库",
+        "iconPath": "static/icons/book.png",
+        "selectedIconPath": "static/icons/book-active.png"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的",
+        "iconPath": "static/icons/mine.png",
+        "selectedIconPath": "static/icons/mine-active.png"
+      }
+    ]
+  }
+}

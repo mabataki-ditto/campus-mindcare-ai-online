@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI心理健康服务平台 - 后端代码Review</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.6; }
+
+    /* 导航 */
+    .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); padding: 20px 0; overflow-y: auto; z-index: 100; }
+    .sidebar h2 { color: #e94560; font-size: 16px; padding: 10px 24px; letter-spacing: 1px; }
+    .sidebar a { display: block; color: #a8b2d1; text-decoration: none; padding: 8px 24px; font-size: 13px; transition: all .2s; border-left: 3px solid transparent; }
+    .sidebar a:hover, .sidebar a.active { color: #e94560; background: rgba(233,69,96,.08); border-left-color: #e94560; }
+    .sidebar .group { color: #5a6a8a; font-size: 11px; padding: 16px 24px 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+
+    /* 主内容 */
+    .main { margin-left: 260px; padding: 32px 40px; max-width: 1100px; }
+
+    /* 卡片 */
+    .card { background: #fff; border-radius: 12px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.06); border: 1px solid #e8ecf1; }
+    .card h2 { font-size: 22px; color: #1a1a2e; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e94560; display: flex; align-items: center; gap: 10px; }
+    .card h2 .icon { font-size: 24px; }
+    .card h3 { font-size: 16px; color: #16213e; margin: 20px 0 10px; padding-left: 12px; border-left: 3px solid #e94560; }
+    .card h4 { font-size: 14px; color: #5a6a8a; margin: 14px 0 8px; }
+
+    /* 表格 */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+    th { background: #f8f9fc; color: #5a6a8a; font-weight: 600; text-align: left; padding: 10px 14px; border-bottom: 2px solid #e8ecf1; white-space: nowrap; }
+    td { padding: 9px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+    tr:hover td { background: #fafbfe; }
+    code { background: #f0f2f5; color: #e94560; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'Fira Code', Consolas, monospace; }
+
+    /* 代码块 */
+    pre { background: #1a1a2e; color: #a8b2d1; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.7; margin: 12px 0; font-family: 'Fira Code', Consolas, monospace; }
+    pre .kw { color: #c792ea; }
+    pre .str { color: #c3e88d; }
+    pre .fn { color: #82aaff; }
+    pre .cm { color: #546e7a; }
+    pre .num { color: #f78c6c; }
+    pre .type { color: #ffcb6b; }
+
+    /* 标签 */
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin: 2px; }
+    .tag-get { background: #e8f5e9; color: #2e7d32; }
+    .tag-post { background: #e3f2fd; color: #1565c0; }
+    .tag-put { background: #fff3e0; color: #e65100; }
+    .tag-delete { background: #fce4ec; color: #c62828; }
+    .tag-auth { background: #f3e5f5; color: #7b1fa2; }
+    .tag-admin { background: #fbe9e7; color: #bf360c; }
+    .tag-risk0 { background: #e8f5e9; color: #2e7d32; }
+    .tag-risk1 { background: #f5f5f5; color: #616161; }
+    .tag-risk2 { background: #fff3e0; color: #e65100; }
+    .tag-risk3 { background: #fce4ec; color: #c62828; }
+
+    /* 流程图 */
+    .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+    .flow-item { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+    .flow-arrow { color: #a8b2d1; font-size: 18px; }
+
+    /* 架构图 */
+    .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+    .arch-box { background: linear-gradient(135deg, #f8f9fc, #fff); border: 1px solid #e8ecf1; border-radius: 10px; padding: 16px; text-align: center; }
+    .arch-box .label { font-size: 11px; color: #5a6a8a; margin-bottom: 6px; }
+    .arch-box .value { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .arch-box.highlight { border-color: #e94560; background: linear-gradient(135deg, #fff5f5, #fff); }
+    .arch-box.highlight .value { color: #e94560; }
+
+    /* 问题标记 */
+    .issue { background: #fff3e0; border-left: 4px solid #ff9800; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; }
+    .issue.good { background: #e8f5e9; border-left-color: #4caf50; }
+    .issue.warn { background: #fff3e0; border-left-color: #ff9800; }
+    .issue.bad { background: #fce4ec; border-left-color: #f44336; }
+
+    /* 描述 */
+    p, li { font-size: 14px; color: #3a3a5c; }
+    ul { padding-left: 20px; }
+    li { margin: 4px 0; }
+
+    /* 响应式 */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 侧边栏导航 -->
+<nav class="sidebar">
+  <h2>AI心理服务平台</h2>
+  <div class="group">概览</div>
+  <a href="#overview">项目架构</a>
+  <a href="#tech-stack">技术栈</a>
+  <a href="#data-model">数据模型</a>
+  <a href="#api-map">API路由地图</a>
+
+  <div class="group">路由模块</div>
+  <a href="#router-user">用户认证 user.ts</a>
+  <a href="#router-consultation">心理咨询 consultation.ts</a>
+  <a href="#router-emotion-diary">情绪日记 emotion-diary.ts</a>
+  <a href="#router-knowledge">知识库 knowledge.ts</a>
+  <a href="#router-file">文件上传 file.ts</a>
+  <a href="#router-analytics">数据分析 analytics.ts</a>
+  <a href="#router-ai">AI代理 ai.ts</a>
+
+  <div class="group">基础设施</div>
+  <a href="#middleware">中间件 auth/error</a>
+  <a href="#utils">工具函数 prisma/response</a>
+  <a href="#config">配置管理 config</a>
+
+  <div class="group">Review</div>
+  <a href="#review">代码Review总结</a>
+</nav>
+
+<!-- 主内容 -->
+<div class="main">
+
+  <!-- 项目架构 -->
+  <div class="card" id="overview">
+    <h2><span class="icon">🏗️</span> 项目架构总览</h2>
+
+    <div class="flow">
+      <div class="flow-item">前端 Vue3</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">Vite Proxy /api</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">Express 5 路由</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">Prisma ORM</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">MariaDB</div>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <div class="flow-item" style="background:linear-gradient(135deg,#e94560,#c62828)">DeepSeek AI API</div>
+      <span style="color:#a8b2d1;font-size:13px;margin-left:8px">← 前端直连 / 后端代理(/api/ai/chat) / 后端情绪分析调用</span>
+    </div>
+
+    <h3>目录结构</h3>
+    <pre>
+ai-psychological-server/
+├── prisma/
+│   ├── schema.prisma          <span class="cm"># 数据模型定义（10个模型）</span>
+│   ├── seed.ts                <span class="cm"># 种子数据（admin/student1账号、角色、菜单、分类）</span>
+│   └── migrations/            <span class="cm"># 数据库迁移文件</span>
+├── src/
+│   ├── index.ts               <span class="cm"># 入口：Express 应用 + 路由挂载</span>
+│   ├── config/index.ts        <span class="cm"># 配置：读取环境变量</span>
+│   ├── middleware/
+│   │   ├── auth.ts            <span class="cm"># JWT认证 + 管理员权限校验</span>
+│   │   └── error.ts           <span class="cm"># 统一错误处理</span>
+│   ├── router/
+│   │   ├── user.ts            <span class="cm"># 用户登录/注册/登出</span>
+│   │   ├── consultation.ts    <span class="cm"># 心理咨询（会话/消息/情绪/预警）</span>
+│   │   ├── emotion-diary.ts   <span class="cm"># 情绪日记 CRUD</span>
+│   │   ├── knowledge.ts       <span class="cm"># 知识库分类/文章</span>
+│   │   ├── file.ts            <span class="cm"># 文件上传</span>
+│   │   ├── analytics.ts       <span class="cm"># 数据分析概览</span>
+│   │   └── ai.ts              <span class="cm"># AI对话代理（转发DeepSeek）</span>
+│   └── utils/
+│       ├── prisma.ts          <span class="cm"># Prisma客户端（MariaDB适配器）</span>
+│       └── response.ts        <span class="cm"># 统一响应格式</span>
+├── uploads/                   <span class="cm"># 文件上传目录</span>
+└── package.json
+    </pre>
+  </div>
+
+  <!-- 技术栈 -->
+  <div class="card" id="tech-stack">
+    <h2><span class="icon">⚡</span> 技术栈</h2>
+    <table>
+      <tr><th>技术</th><th>版本</th><th>用途</th></tr>
+      <tr><td>Express</td><td>5.x</td><td>Web框架</td></tr>
+      <tr><td>TypeScript</td><td>6.x</td><td>开发语言</td></tr>
+      <tr><td>Prisma</td><td>7.x</td><td>ORM（MariaDB适配器）</td></tr>
+      <tr><td>MariaDB</td><td>-</td><td>数据库</td></tr>
+      <tr><td>jsonwebtoken</td><td>9.x</td><td>JWT认证</td></tr>
+      <tr><td>bcryptjs</td><td>3.x</td><td>密码加密</td></tr>
+      <tr><td>multer</td><td>2.x</td><td>文件上传</td></tr>
+      <tr><td>DeepSeek API</td><td>-</td><td>AI对话 + 情绪分析</td></tr>
+    </table>
+  </div>
+
+  <!-- 数据模型 -->
+  <div class="card" id="data-model">
+    <h2><span class="icon">🗄️</span> 数据模型（10个表）</h2>
+
+    <h3>用户权限模块</h3>
+    <table>
+      <tr><th>模型</th><th>关键字段</th><th>说明</th></tr>
+      <tr>
+        <td><code>User</code></td>
+        <td>userType(1普通/2管理员), riskLevel(0-3), status(0禁用/1正常)</td>
+        <td>用户表，关联 sessions, diaries, alertEvents</td>
+      </tr>
+      <tr><td><code>Role</code></td><td>code(admin/user)</td><td>角色表</td></tr>
+      <tr><td><code>Menu</code></td><td>parentId, type(1目录/2菜单), path, permission</td><td>菜单表（树形结构）</td></tr>
+      <tr><td><code>UserRole</code></td><td>userId, roleId</td><td>用户-角色关联</td></tr>
+      <tr><td><code>RoleMenu</code></td><td>roleId, menuId</td><td>角色-菜单关联</td></tr>
+    </table>
+
+    <h3>心理咨询模块</h3>
+    <table>
+      <tr><th>模型</th><th>关键字段</th><th>说明</th></tr>
+      <tr>
+        <td><code>ConsultationSession</code></td>
+        <td>sessionId(业务ID如session_xxx), status(TEMP/ACTIVE/ENDED)</td>
+        <td>咨询会话</td>
+      </tr>
+      <tr><td><code>ChatMessage</code></td><td>senderType(1用户/2AI), content</td><td>聊天消息</td></tr>
+      <tr><td><code>SessionEmotion</code></td><td>primaryEmotion, emotionScore(0-100), riskLevel(0-3)</td><td>情绪分析结果</td></tr>
+    </table>
+
+    <h3>预警模块</h3>
+    <table>
+      <tr><th>模型</th><th>关键字段</th><th>说明</th></tr>
+      <tr>
+        <td><code>AlertEvent</code></td>
+        <td>riskLevel(0-3), handled(布尔), handleNote, handledAt</td>
+        <td>预警事件（关联User和Session）</td>
+      </tr>
+    </table>
+
+    <h3>情绪日记模块</h3>
+    <table>
+      <tr><th>模型</th><th>关键字段</th><th>说明</th></tr>
+      <tr>
+        <td><code>EmotionDiary</code></td>
+        <td>moodScore(1-5), moodLabel, dominantEmotion, sleepQuality, stressLevel</td>
+        <td>情绪日记</td>
+      </tr>
+    </table>
+
+    <h3>知识库模块</h3>
+    <table>
+      <tr><th>模型</th><th>关键字段</th><th>说明</th></tr>
+      <tr><td><code>KnowledgeCategory</code></td><td>parentId, sort</td><td>知识分类（树形）</td></tr>
+      <tr><td><code>KnowledgeArticle</code></td><td>status(0草稿/1发布/2下线), readCount</td><td>知识文章</td></tr>
+    </table>
+
+    <h3>风险等级说明</h3>
+    <table>
+      <tr><th>等级</th><th>标签</th><th>含义</th><th>触发条件</th></tr>
+      <tr><td>0</td><td><span class="tag tag-risk0">正常</span></td><td>情绪稳定</td><td>默认值</td></tr>
+      <tr><td>1</td><td><span class="tag tag-risk1">关注</span></td><td>轻微负面情绪</td><td>AI情绪分析判定</td></tr>
+      <tr><td>2</td><td><span class="tag tag-risk2">预警</span></td><td>有明显焦虑/抑郁倾向</td><td>AI分析 + 自动创建AlertEvent</td></tr>
+      <tr><td>3</td><td><span class="tag tag-risk3">危机</span></td><td>有自伤/自杀倾向</td><td>AI分析 + 自动创建AlertEvent + 更新User.riskLevel</td></tr>
+    </table>
+  </div>
+
+  <!-- API路由地图 -->
+  <div class="card" id="api-map">
+    <h2><span class="icon">🗺️</span> API路由地图</h2>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>权限</th><th>功能</th></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/user/login</code></td><td>公开</td><td>登录</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/user/add</code></td><td>公开</td><td>注册</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/user/logout</code></td><td><span class="tag tag-auth">登录</span></td><td>登出</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/psychological-chat/session/start</code></td><td><span class="tag tag-auth">登录</span></td><td>创建咨询会话</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/psychological-chat/sessions</code></td><td><span class="tag tag-auth">登录</span></td><td>会话列表</td></tr>
+      <tr><td><span class="tag tag-delete">DELETE</span></td><td><code>/api/psychological-chat/sessions/:id</code></td><td><span class="tag tag-auth">登录</span></td><td>删除会话</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/psychological-chat/sessions/:id/messages</code></td><td><span class="tag tag-auth">登录</span></td><td>获取消息列表</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/psychological-chat/sessions/:id/messages</code></td><td><span class="tag tag-auth">登录</span></td><td>保存消息</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/psychological-chat/session/:id/emotion</code></td><td><span class="tag tag-auth">登录</span></td><td>情绪分析（支持forceRefresh）</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/psychological-chat/alert</code></td><td><span class="tag tag-auth">登录</span></td><td>创建预警</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/psychological-chat/alerts</code></td><td><span class="tag tag-admin">管理员</span></td><td>预警记录列表</td></tr>
+      <tr><td><span class="tag tag-put">PUT</span></td><td><code>/api/psychological-chat/alerts/:id/handle</code></td><td><span class="tag tag-admin">管理员</span></td><td>处理预警</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/emotion-diary</code></td><td><span class="tag tag-auth">登录</span></td><td>新增日记</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/emotion-diary/admin/page</code></td><td><span class="tag tag-admin">管理员</span></td><td>日记管理列表</td></tr>
+      <tr><td><span class="tag tag-delete">DELETE</span></td><td><code>/api/emotion-diary/admin/:id</code></td><td><span class="tag tag-admin">管理员</span></td><td>删除日记</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/knowledge/category/tree</code></td><td><span class="tag tag-auth">登录</span></td><td>分类树</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/knowledge/article/page</code></td><td><span class="tag tag-auth">登录</span></td><td>文章分页</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/knowledge/article/:id</code></td><td><span class="tag tag-auth">登录</span></td><td>文章详情</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/knowledge/article</code></td><td><span class="tag tag-admin">管理员</span></td><td>创建文章</td></tr>
+      <tr><td><span class="tag tag-put">PUT</span></td><td><code>/api/knowledge/article/:id</code></td><td><span class="tag tag-admin">管理员</span></td><td>更新文章</td></tr>
+      <tr><td><span class="tag tag-put">PUT</span></td><td><code>/api/knowledge/article/:id/status</code></td><td><span class="tag tag-admin">管理员</span></td><td>变更文章状态</td></tr>
+      <tr><td><span class="tag tag-delete">DELETE</span></td><td><code>/api/knowledge/article/:id</code></td><td><span class="tag tag-admin">管理员</span></td><td>删除文章</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/file/upload</code></td><td><span class="tag tag-auth">登录</span></td><td>文件上传</td></tr>
+      <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/data-analytics/overview</code></td><td><span class="tag tag-admin">管理员</span></td><td>数据概览</td></tr>
+      <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/ai/chat</code></td><td><span class="tag tag-auth">登录</span></td><td>AI对话代理</td></tr>
+    </table>
+  </div>
+
+  <!-- 用户认证 -->
+  <div class="card" id="router-user">
+    <h2><span class="icon">👤</span> 用户认证 — user.ts</h2>
+
+    <h3>登录流程</h3>
+    <div class="flow">
+      <div class="flow-item">用户名+密码</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">bcrypt验证</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">生成JWT(7天)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">管理员加载菜单树</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">返回token+userInfo+menus</div>
+    </div>
+
+    <h3>注册流程</h3>
+    <div class="flow">
+      <div class="flow-item">用户名+密码</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">唯一性检查</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">bcrypt加密(10轮)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">分配默认user角色</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">返回userId</div>
+    </div>
+
+    <h3>关键代码</h3>
+    <pre>
+<span class="cm">// JWT Token 生成</span>
+<span class="kw">const</span> token = jwt.<span class="fn">sign</span>(
+  { userId: user.id, username: user.username, userType: user.userType },
+  config.jwtSecret,
+  { expiresIn: <span class="str">'7d'</span> }
+)
+
+<span class="cm">// 管理员菜单树构建（三级嵌套查询）</span>
+UserRole → Role → RoleMenu → Menu
+<span class="cm">// 然后递归构建 parentId 父子关系</span>
+    </pre>
+  </div>
+
+  <!-- 心理咨询 -->
+  <div class="card" id="router-consultation">
+    <h2><span class="icon">💬</span> 心理咨询 — consultation.ts（核心模块，534行）</h2>
+
+    <h3>会话生命周期</h3>
+    <div class="flow">
+      <div class="flow-item">创建会话(TEMP)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">首条消息(ACTIVE)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">持续对话</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">情绪分析</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">风险预警(可选)</div>
+    </div>
+
+    <h3>AI情绪分析流程 <code>analyzeEmotionWithAI()</code></h3>
+    <div class="flow">
+      <div class="flow-item">取最近20条消息</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">提取用户发言</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">调用DeepSeek分析</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">解析JSON结果</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item">保存SessionEmotion</div>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <div class="flow-item" style="background:linear-gradient(135deg,#e94560,#c62828)">riskLevel≥2?</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" style="background:linear-gradient(135deg,#e94560,#c62828)">自动创建AlertEvent</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-item" style="background:linear-gradient(135deg,#e94560,#c62828)">更新User.riskLevel</div>
+    </div>
+
+    <h3>情绪分析Prompt（简化）</h3>
+    <pre>
+系统提示：你是专业心理咨询师和情绪分析师，请分析用户发言的情绪状态。
+要求返回严格JSON格式：
+{
+  "primaryEmotion": "主要情绪",
+  "emotionScore": 0-100,      <span class="cm">// 0=极度负面, 50=中性, 100=极度正面</span>
+  "isNegative": true/false,
+  "riskLevel": 0-3,           <span class="cm">// 0正常, 1关注, 2预警, 3危机</span>
+  "riskDescription": "判断依据",
+  "suggestion": "支持性建议",
+  "improvementSuggestions": [] <span class="cm">// 最多5条改善建议</span>
+}
+    </pre>
+
+    <h3>预警触发条件</h3>
+    <table>
+      <tr><th>触发源</th><th>触发方式</th><th>说明</th></tr>
+      <tr><td>AI情绪分析</td><td>自动</td><td>analyzeEmotionWithAI 检测到 riskLevel≥2 时自动创建 AlertEvent</td></tr>
+      <tr><td>前端 Function Calling</td><td>triggerAlert 工具</td><td>前端直连 DeepSeek 时，模型调用 triggerAlert → POST /alert</td></tr>
+    </table>
+  </div>
+
+  <!-- 情绪日记 -->
+  <div class="card" id="router-emotion-diary">
+    <h2><span class="icon">📝</span> 情绪日记 — emotion-diary.ts</h2>
+    <p>3个接口，结构简单：</p>
+    <table>
+      <tr><th>接口</th><th>功能</th><th>关键数据</th></tr>
+      <tr><td><span class="tag tag-post">POST</span> /</td><td>新增日记</td><td>moodScore, dominantEmotion, sleepQuality, stressLevel</td></tr>
+      <tr><td><span class="tag tag-get">GET</span> /admin/page</td><td>管理列表</td><td>关联User查nickname，分页</td></tr>
+      <tr><td><span class="tag tag-delete">DELETE</span> /admin/:id</td><td>删除日记</td><td>仅管理员</td></tr>
+    </table>
+  </div>
+
+  <!-- 知识库 -->
+  <div class="card" id="router-knowledge">
+    <h2><span class="icon">📚</span> 知识库 — knowledge.ts</h2>
+    <p>6个接口，支持分类树 + 文章CRUD：</p>
+    <table>
+      <tr><th>接口</th><th>功能</th><th>说明</th></tr>
+      <tr><td><span class="tag tag-get">GET</span> /category/tree</td><td>分类树</td><td>递归构建parentId父子树</td></tr>
+      <tr><td><span class="tag tag-get">GET</span> /article/page</td><td>文章分页</td><td>支持keyword搜索 + categoryId过滤</td></tr>
+      <tr><td><span class="tag tag-get">GET</span> /article/:id</td><td>文章详情</td><td>自增readCount</td></tr>
+      <tr><td><span class="tag tag-post">POST</span> /article</td><td>创建文章</td><td>管理员</td></tr>
+      <tr><td><span class="tag tag-put">PUT</span> /article/:id</td><td>更新文章</td><td>管理员</td></tr>
+      <tr><td><span class="tag tag-put">PUT</span> /article/:id/status</td><td>变更状态</td><td>0草稿/1发布/2下线</td></tr>
+      <tr><td><span class="tag tag-delete">DELETE</span> /article/:id</td><td>删除文章</td><td>管理员</td></tr>
+    </table>
+  </div>
+
+  <!-- 文件上传 -->
+  <div class="card" id="router-file">
+    <h2><span class="icon">📎</span> 文件上传 — file.ts</h2>
+    <p>1个接口，multer处理：</p>
+    <ul>
+      <li>按 <code>businessType</code> 分目录存储（如 <code>uploads/avatar/</code>、<code>uploads/article/</code>）</li>
+      <li>文件名使用 UUID 防冲突</li>
+      <li>大小限制 5MB</li>
+      <li>静态文件服务：<code>/uploads/*</code> 直接访问</li>
+    </ul>
+  </div>
+
+  <!-- 数据分析 -->
+  <div class="card" id="router-analytics">
+    <h2><span class="icon">📊</span> 数据分析 — analytics.ts</h2>
+    <p>1个接口 <code>GET /overview</code>，返回5大模块数据：</p>
+
+    <div class="arch-grid">
+      <div class="arch-box highlight">
+        <div class="label">systemOverview</div>
+        <div class="value">用户/日记/会话/预警统计</div>
+      </div>
+      <div class="arch-box">
+        <div class="label">emotionTrend</div>
+        <div class="value">30天情绪评分趋势</div>
+      </div>
+      <div class="arch-box">
+        <div class="label">consultationStats</div>
+        <div class="value">咨询会话统计</div>
+      </div>
+      <div class="arch-box">
+        <div class="label">userActivity</div>
+        <div class="value">30天用户活跃度</div>
+      </div>
+      <div class="arch-box">
+        <div class="label">alertStats</div>
+        <div class="value">预警分布+最近预警</div>
+      </div>
+    </div>
+
+    <h3>数据聚合逻辑</h3>
+    <pre>
+<span class="cm">// 情绪趋势：按日期聚合日记的 moodScore</span>
+aggregateByDate(diaries, <span class="str">'moodScore'</span>)
+→ { date, avgMoodScore, recordCount }
+
+<span class="cm">// 用户活跃度：30天完整日期序列</span>
+getDailyNewUsers()         <span class="cm">// 每日新增用户数</span>
+getDailyUniqueUsers(<span class="str">'emotionDiary'</span>, <span class="str">'userId'</span>)  <span class="cm">// 每日写日记的独立用户</span>
+getDailyUniqueUsers(<span class="str">'consultationSession'</span>, <span class="str">'userId'</span>) <span class="cm">// 每日咨询的独立用户</span>
+buildFullDateActivity()     <span class="cm">// 补齐30天空白天</span>
+→ { date, activeUsers, newUsers, diaryUsers, consultationUsers }
+    </pre>
+  </div>
+
+  <!-- AI代理 -->
+  <div class="card" id="router-ai">
+    <h2><span class="icon">🤖</span> AI对话代理 — ai.ts</h2>
+    <p>1个接口 <code>POST /api/ai/chat</code>，转发DeepSeek API：</p>
+
+    <h3>当前AI调用架构（双通道）</h3>
+    <div class="flow">
+      <div class="flow-item">前端直连DeepSeek</div>
+      <span style="font-size:12px;color:#5a6a8a;margin:0 8px">（当前使用，SSE流式）</span>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <div class="flow-item" style="background:linear-gradient(135deg,#667eea,#764ba2)">/api/ai/chat 代理</div>
+      <span style="font-size:12px;color:#5a6a8a;margin:0 8px">（备用，前端待切换）</span>
+    </div>
+
+    <h3>代理接口支持</h3>
+    <ul>
+      <li>流式响应（SSE透传）</li>
+      <li>非流式响应</li>
+      <li>Function Calling（tools + tool_choice 参数透传）</li>
+    </ul>
+  </div>
+
+  <!-- 中间件 -->
+  <div class="card" id="middleware">
+    <h2><span class="icon">🔒</span> 中间件</h2>
+
+    <h3>auth.ts — JWT认证 + 权限校验</h3>
+    <table>
+      <tr><th>中间件</th><th>功能</th><th>校验逻辑</th></tr>
+      <tr>
+        <td><code>authMiddleware</code></td>
+        <td>JWT认证</td>
+        <td>从请求头 <code>token</code> 字段取JWT → verify → 挂载 <code>req.user</code></td>
+      </tr>
+      <tr>
+        <td><code>adminMiddleware</code></td>
+        <td>管理员权限</td>
+        <td>检查 <code>req.user.userType === 2</code></td>
+      </tr>
+    </table>
+
+    <h3>error.ts — 统一错误处理</h3>
+    <p>捕获所有未处理的异常，返回统一格式 <code>{ code: 500, msg, data: null }</code></p>
+  </div>
+
+  <!-- 工具函数 -->
+  <div class="card" id="utils">
+    <h2><span class="icon">🔧</span> 工具函数</h2>
+
+    <h3>prisma.ts — 数据库客户端</h3>
+    <pre>
+<span class="kw">import</span> { PrismaMariaDb } <span class="kw">from</span> <span class="str">'@prisma/adapter-mariadb'</span>
+<span class="kw">const</span> adapter = <span class="kw">new</span> <span class="type">PrismaMariaDb</span>({
+  host: <span class="str">'localhost'</span>, port: <span class="num">3306</span>,
+  user: <span class="str">'root'</span>, password: <span class="str">'12345'</span>,
+  database: <span class="str">'ai_psychological'</span>,
+  connectionLimit: <span class="num">5</span>
+})
+<span class="kw">const</span> prisma = <span class="kw">new</span> <span class="type">PrismaClient</span>({ adapter })
+    </pre>
+
+    <h3>response.ts — 统一响应格式</h3>
+    <table>
+      <tr><th>函数</th><th>返回格式</th><th>使用场景</th></tr>
+      <tr><td><code>success(data, msg)</code></td><td><code>{ code: 200, msg, data, success: true }</code></td><td>成功响应</td></tr>
+      <tr><td><code>fail(msg, code)</code></td><td><code>{ code: 500, msg, data: null, success: false }</code></td><td>失败响应</td></tr>
+      <tr><td><code>unauthorized(msg)</code></td><td><code>{ code: -1, msg, data: null, success: false }</code></td><td>未认证</td></tr>
+    </table>
+  </div>
+
+  <!-- 配置 -->
+  <div class="card" id="config">
+    <h2><span class="icon">⚙️</span> 配置管理</h2>
+    <table>
+      <tr><th>环境变量</th><th>默认值</th><th>用途</th></tr>
+      <tr><td><code>PORT</code></td><td>3000</td><td>服务端口</td></tr>
+      <tr><td><code>JWT_SECRET</code></td><td>default-secret</td><td>JWT签名密钥</td></tr>
+      <tr><td><code>JWT_EXPIRES_IN</code></td><td>7d</td><td>JWT过期时间</td></tr>
+      <tr><td><code>DEEPSEEK_API_KEY</code></td><td>(空)</td><td>DeepSeek API密钥</td></tr>
+      <tr><td><code>DEEPSEEK_BASE_URL</code></td><td>https://api.deepseek.com/v1</td><td>DeepSeek API地址</td></tr>
+      <tr><td><code>DEEPSEEK_MODEL</code></td><td>deepseek-chat</td><td>模型名称</td></tr>
+      <tr><td><code>DATABASE_HOST</code></td><td>localhost</td><td>数据库主机</td></tr>
+      <tr><td><code>DATABASE_PORT</code></td><td>3306</td><td>数据库端口</td></tr>
+      <tr><td><code>DATABASE_USER</code></td><td>root</td><td>数据库用户</td></tr>
+      <tr><td><code>DATABASE_PASSWORD</code></td><td>12345</code></td><td>数据库密码</td></tr>
+      <tr><td><code>DATABASE_NAME</code></td><td>ai_psychological</td><td>数据库名</td></tr>
+      <tr><td><code>UPLOAD_DIR</code></td><td>uploads</td><td>上传目录</td></tr>
+      <tr><td><code>MAX_FILE_SIZE</code></td><td>5242880(5MB)</td><td>最大文件大小</td></tr>
+    </table>
+
+    <h3>种子数据</h3>
+    <table>
+      <tr><th>类型</th><th>数据</th></tr>
+      <tr><td>管理员</td><td>admin / admin123（userType=2）</td></tr>
+      <tr><td>普通用户</td><td>student1 / user123（userType=1）</td></tr>
+      <tr><td>角色</td><td>admin、user</td></tr>
+      <tr><td>菜单</td><td>数据分析、知识文章、AI陪伴记录、心情档案</td></tr>
+      <tr><td>知识库分类</td><td>情绪管理、压力应对、人际关系、学业心理、自我成长</td></tr>
+    </table>
+  </div>
+
+  <!-- Code Review -->
+  <div class="card" id="review">
+    <h2><span class="icon">🔍</span> 代码Review总结</h2>
+
+    <h3>优点</h3>
+    <div class="issue good">
+      <strong>✅ 统一响应格式</strong>：所有接口使用 success/fail/unauthorized 统一包装，前端处理一致
+    </div>
+    <div class="issue good">
+      <strong>✅ 权限分层清晰</strong>：authMiddleware（登录校验）+ adminMiddleware（管理员校验），按需组合
+    </div>
+    <div class="issue good">
+      <strong>✅ AI情绪分析自动化</strong>：风险等级≥2自动创建预警记录+更新用户风险等级，形成闭环
+    </div>
+    <div class="issue good">
+      <strong>✅ 种子数据完善</strong>：提供完整的初始数据（账号、角色、菜单、分类），开箱即用
+    </div>
+    <div class="issue good">
+      <strong>✅ AI代理透传</strong>：/api/ai/chat 支持流式/非流式/Function Calling，为前端切换后端代理做好准备
+    </div>
+
+    <h3>需要关注的问题</h3>
+
+    <div class="issue bad">
+      <strong>❌ JWT Secret 硬编码默认值</strong>：<code>config.jwtSecret</code> 默认值为 <code>'default-secret'</code>，生产环境必须通过环境变量覆盖，否则存在严重安全隐患
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ Token 字段非标准</strong>：使用 <code>req.headers['token']</code> 而非标准的 <code>Authorization: Bearer xxx</code>，不符合 RESTful 规范，且与第三方工具（Swagger/Postman）不兼容
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 前端直连DeepSeek API Key暴露</strong>：当前前端直接调用 DeepSeek API，API Key 通过 <code>VITE_DEEPSEEK_API_KEY</code> 暴露在前端代码中。应切换到后端代理 <code>/api/ai/chat</code>
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 情绪分析无频率限制</strong>：<code>forceRefresh=true</code> 时每次对话后都调用 DeepSeek API 重新分析，无频率限制，可能导致 API 费用过高。建议加缓存或限制分析频率
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 删除操作无软删除</strong>：会话、日记、文章删除都是物理删除（<code>prisma.xxx.delete</code>），数据无法恢复。建议增加 <code>deletedAt</code> 字段做软删除
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 会话列表缺少风险等级</strong>：<code>GET /sessions</code> 返回的 <code>riskLevel</code> 默认为0，实际风险等级来自 SessionEmotion/AlertEvent，前端需要额外映射。建议后端直接关联查询最新风险等级
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 文件上传无类型校验</strong>：multer 只限制了文件大小，没有校验文件类型（MIME type），可能上传恶意文件
+    </div>
+
+    <div class="issue warn">
+      <strong>⚠️ 数据库连接池偏小</strong>：<code>connectionLimit: 5</code> 在并发场景下可能不够，建议根据业务量调整
+    </div>
+
+    <h3>架构建议</h3>
+    <table>
+      <tr><th>优先级</th><th>建议</th><th>说明</th></tr>
+      <tr><td><span class="tag tag-risk3">P0</span></td><td>切换到后端AI代理</td><td>前端直连DeepSeek暴露API Key，应改用 /api/ai/chat 代理</td></tr>
+      <tr><td><span class="tag tag-risk3">P0</span></td><td>JWT Secret 强制环境变量</td><td>启动时检查 JWT_SECRET 是否为默认值，是则拒绝启动</td></tr>
+      <tr><td><span class="tag tag-risk2">P1</span></td><td>会话列表关联风险等级</td><td>在 GET /sessions 查询时 JOIN SessionEmotion 获取最新风险等级</td></tr>
+      <tr><td><span class="tag tag-risk2">P1</span></td><td>情绪分析加缓存/限频</td><td>同一会话5分钟内不重复分析，或只在新消息>3条时重新分析</td></tr>
+      <tr><td><span class="tag tag-risk1">P2</span></td><td>软删除</td><td>重要数据（会话、日记）增加 deletedAt 字段</td></tr>
+      <tr><td><span class="tag tag-risk1">P2</span></td><td>文件上传类型校验</td><td>multer 增加 fileFilter 校验 MIME type</td></tr>
+      <tr><td><span class="tag tag-risk1">P2</span></td><td>API文档</td><td>引入 Swagger/OpenAPI 自动生成接口文档</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // 侧边栏高亮
+  const links = document.querySelectorAll('.sidebar a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  document.querySelectorAll('.card[id]').forEach(card => observer.observe(card));
+</script>
+
+</body>
+</html>
