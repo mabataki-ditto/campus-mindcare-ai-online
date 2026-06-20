@@ -16,9 +16,13 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 768M
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -55,7 +59,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '1.0'
+          cpus: "1.0"
     command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
   nginx:
