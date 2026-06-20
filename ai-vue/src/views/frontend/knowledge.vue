@@ -151,10 +151,13 @@ onMounted(() => {
     display: flex;
     gap: 20px;
     margin: 0 auto;
-    width: 1200px;
+    max-width: 1200px;
+    width: 100%;
     padding: 20px;
+    box-sizing: border-box;
     .recommend-section {
       width: 280px;
+      flex-shrink: 0;
       background: white;
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -190,6 +193,7 @@ onMounted(() => {
     }
     .article-list {
       flex: 1;
+      min-width: 0;
       .article-item {
         background: white;
         border-radius: 12px;
@@ -212,6 +216,40 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .knowledge-container {
+    .header-section {
+      padding: 24px 15px;
+      .header-content {
+        h1 {
+          font-size: 20px;
+        }
+      }
+    }
+    .content {
+      flex-direction: column;
+      padding: 15px;
+      .recommend-section {
+        width: 100%;
+        height: auto;
+      }
+      .article-list {
+        .article-item {
+          flex-direction: column;
+          :deep(.el-image) {
+            width: 100% !important;
+            height: 180px !important;
+          }
+          .info {
+            margin-left: 0;
+            margin-top: 12px;
+          }
+        }
+      }
+    }
   }
 }
 </style>

@@ -10,11 +10,14 @@
           <p>您的贴心AI心理健康助手</p>
         </div>
       </div>
-      <el-button circle title="新建会话" @click="$emit('new-session')">
-        <el-icon>
-          <Plus />
-        </el-icon>
-      </el-button>
+      <div class="header-actions">
+        <slot name="mobile-toggle"></slot>
+        <el-button circle title="新建会话" @click="$emit('new-session')">
+          <el-icon>
+            <Plus />
+          </el-icon>
+        </el-button>
+      </div>
     </div>
 
     <ChatMessageList :messages="messages" :is-ai-typing="isAiTyping" :ai-icon="aiIcon" :user-icon="userIcon" />
@@ -122,6 +125,12 @@ defineEmits(['new-session', 'send', 'update:userMessage', 'file-select', 'file-r
     position: relative;
     flex-shrink: 0;
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .header-left {
       display: flex;
       align-items: center;
@@ -179,6 +188,29 @@ defineEmits(['new-session', 'send', 'update:userMessage', 'file-select', 'file-r
       cursor: pointer;
       &:hover {
         color: #606266;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-main {
+    .chat-header {
+      padding: 14px 15px;
+      .header-left {
+        .chat-avatar {
+          width: 36px;
+          height: 36px;
+          margin-right: 10px;
+        }
+        .chat-info {
+          h2 {
+            font-size: 16px;
+          }
+          p {
+            font-size: 12px;
+          }
+        }
       }
     }
   }

@@ -179,8 +179,10 @@ const submit = () => {
   }
   .content {
     margin: 0 auto;
-    width: 980px;
+    max-width: 980px;
+    width: 100%;
     padding: 20px;
+    box-sizing: border-box;
     .diary-card {
       margin-bottom: 20px;
       background: white;
@@ -214,7 +216,7 @@ const submit = () => {
           background: #f9fafb;
           .emotion-name {
             margin-top: 10px;
-            padding: 0 75px;
+            padding: 0 30px;
             color: #374151;
           }
           &.selected {
@@ -238,6 +240,45 @@ const submit = () => {
         }
         .action-buttons {
           margin-top: 40px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .emotionDiary-container {
+    .header-section {
+      padding: 24px 15px;
+      .header-content {
+        h1 {
+          font-size: 20px;
+        }
+      }
+    }
+    .content {
+      padding: 15px;
+      .diary-card {
+        padding: 15px;
+        .title {
+          font-size: 20px;
+        }
+        .emotion-grid {
+          .emotion-card {
+            flex: 1 1 calc(50% - 10px);
+            .emotion-name {
+              padding: 0;
+            }
+          }
+        }
+        .detail-form {
+          .life-indicators {
+            flex-direction: column;
+            gap: 10px;
+          }
+          .action-buttons {
+            margin-top: 24px;
+          }
         }
       }
     }

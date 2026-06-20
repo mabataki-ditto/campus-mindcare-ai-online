@@ -8,8 +8,8 @@
         </h2>
         <p class="description">每个深夜，每个焦虑的时刻，我们都在这里。不必独自承受，让心与心的连接温暖您的每一天</p>
         <div class="hero-actions">
-          <el-button size="large">开始倾诉，获得陪伴</el-button>
-          <el-button size="large" style="border-color: #fff" color="transparent">记录心情，释放情感</el-button>
+          <el-button size="large" @click="handleNavigate('/consultation')">开始倾诉，获得陪伴</el-button>
+          <el-button size="large" style="border-color: #fff" color="transparent" @click="handleNavigate('/emotion-diary')">记录心情，释放情感</el-button>
         </div>
       </div>
       <div class="robot">
@@ -20,7 +20,20 @@
 </template>
 
 <script setup>
+import router from '@/router'
+import useLoginStore from '@/stores/login/login'
+
 const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
+
+const loginStore = useLoginStore()
+
+const handleNavigate = (path) => {
+  if (!loginStore.token) {
+    router.push('/auth/login')
+  } else {
+    router.push(path)
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -29,6 +42,7 @@ const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
   color: white;
   padding: 5rem 0;
   height: calc(100vh - 285px);
+  height: calc(100dvh - 285px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,6 +77,38 @@ const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
       box-shadow:
         0 15px 35px rgba(0, 0, 0, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 2rem 15px;
+    height: auto;
+    min-height: calc(100dvh - 200px);
+    .content {
+      flex-direction: column-reverse;
+      gap: 20px;
+      .text {
+        width: 100%;
+        .title {
+          font-size: 28px;
+          margin-bottom: 10px;
+        }
+        .description {
+          font-size: 14px;
+        }
+        .hero-actions {
+          margin-top: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+      .robot {
+        width: 180px;
+        height: 180px;
+      }
     }
   }
 }

@@ -15,7 +15,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 # 单独编译 seed.ts 到 dist/prisma/seed.js
-RUN npx tsc prisma/seed.ts --outDir dist/prisma --module commonjs --target ES2020 --esModuleInterop --skipLibCheck --moduleResolution node
+RUN npx tsc prisma/seed.ts --outDir dist/prisma --module Node16 --target ES2020 --esModuleInterop --skipLibCheck --moduleResolution node16 --types node --ignoreConfig
 
 # 后端运行阶段：只保留生产依赖和编译后的 dist。
 FROM node:24-alpine AS runtime

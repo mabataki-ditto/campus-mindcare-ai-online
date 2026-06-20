@@ -184,4 +184,20 @@ const removeFile = () => {
     transition: all 0.3s ease;
   }
 }
+
+@media (max-width: 768px) {
+  .chat-input {
+    padding: 12px 15px;
+    gap: 8px;
+    .send-btn {
+      height: 48px;
+      width: 48px;
+      border-radius: 12px;
+    }
+    .attach-btn {
+      height: 36px;
+      width: 36px;
+    }
+  }
+}
 </style>

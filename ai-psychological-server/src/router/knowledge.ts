@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../utils/prisma'
 import { success, fail } from '../utils/response'
-import { authMiddleware, adminMiddleware } from '../middleware/auth'
+import { authMiddleware, adminMiddleware, optionalAuthMiddleware } from '../middleware/auth'
 
 const router = Router()
 
@@ -31,7 +31,7 @@ const router = Router()
  *                       parentId: { type: number }
  *                       children: { type: array }
  */
-router.get('/category/tree', authMiddleware, async (req: Request, res: Response) => {
+router.get('/category/tree', optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const categories = await prisma.knowledgeCategory.findMany({
       where: { status: 1 },
@@ -89,7 +89,7 @@ router.get('/category/tree', authMiddleware, async (req: Request, res: Response)
  *       200:
  *         description: 查询成功
  */
-router.get('/article/page', authMiddleware, async (req: Request, res: Response) => {
+router.get('/article/page', optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const page = Number(req.query.currentPage || req.query.pageNum || 1)
     const size = Number(req.query.size || req.query.pageSize || 10)
@@ -159,7 +159,7 @@ router.get('/article/page', authMiddleware, async (req: Request, res: Response) 
 })
 
 // GET /api/knowledge/article/:id — 文章详情
-router.get('/article/:id', authMiddleware, async (req: Request, res: Response) => {
+router.get('/article/:id', optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 

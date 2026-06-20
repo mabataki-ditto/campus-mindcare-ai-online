@@ -54,6 +54,33 @@ export function authMiddleware(
 }
 
 /**
+ * 可选认证中间件
+ * 有 token 则解析挂载 req.user，无 token 也放行
+ * 用于需要同时支持登录和未登录访问的公开接口（如知识库查询）
+ */
+export function optionalAuthMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const token = req.headers["token"] as string;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, config.jwtSecret) as {
+        userId: number;
+        username: string;
+        userType: number;
+      };
+      req.user = decoded;
+    } catch {
+      // token 无效也放行，只是不挂载 user 信息
+    }
+  }
+  next();
+}
+
+/**
  * 管理员权限校验中间件
  * 必须在 authMiddleware 之后使用，依赖 req.user
  * 校验 userType 是否为 2（管理员）

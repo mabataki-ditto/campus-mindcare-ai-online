@@ -96,8 +96,10 @@ const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
   }
   .content {
     margin: 0 auto;
-    width: 980px;
+    max-width: 980px;
+    width: 100%;
     padding: 20px;
+    box-sizing: border-box;
     .diary-card {
       margin-bottom: 20px;
       background: white;
@@ -179,6 +181,43 @@ const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .articleDetail-container {
+    .header-section {
+      padding: 24px 15px;
+      .header-content {
+        h1 {
+          font-size: 20px;
+        }
+      }
+    }
+    .content {
+      padding: 15px;
+      .diary-card {
+        padding: 15px;
+        .article-title {
+          font-size: 20px;
+          margin-top: 20px;
+        }
+        .sub-title {
+          flex-wrap: wrap;
+          gap: 10px;
+          .category-tag {
+            margin-right: 0;
+          }
+        }
+        .content-wrapper {
+          font-size: 14px;
+          :deep(img) {
+            max-width: 100%;
+            height: auto;
+          }
         }
       }
     }
