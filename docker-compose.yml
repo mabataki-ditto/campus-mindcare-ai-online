@@ -13,6 +13,10 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - mindcare_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
@@ -47,6 +51,11 @@ services:
       - backend_uploads:/app/uploads
     networks:
       - mindcare_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
     command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
   nginx:
@@ -58,8 +67,8 @@ services:
     depends_on:
       - backend
     ports:
-      # 练习阶段用 8080；正式使用 HTTP 时可改成 "80:80"。
-      - "8080:80"
+      # 使用 80 端口，配合域名直接访问，不用带端口号。
+      - "80:80"
     volumes:
       # 只覆盖 Nginx 配置，前端 dist 已在镜像构建阶段复制进去。
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro

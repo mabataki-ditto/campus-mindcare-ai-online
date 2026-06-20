@@ -222,36 +222,43 @@ sudo docker info | grep -A 5 "Registry Mirrors"
 
 ## 上传项目到服务器
 
-先从服务器退出，回到 Win11 PowerShell：
+项目已经推到 Gitee 仓库，服务器直接从 Gitee 拉取，不需要 scp。
 
-```bash
-exit
-```
-
-确认终端已经回到类似：
-
-```text
-PS C:\Users\dittoditto>
-```
-
-再执行上传命令：
-
-```powershell
-scp -r E:\campus-mindcare-AI ubuntu@106.53.3.215:/home/ubuntu/campus-mindcare-AI
-```
-
-注意：`scp` 要在本机 PowerShell 里执行，不要在 SSH 登录后的服务器终端里执行。服务器不认识 `E:\...` 这种 Windows 路径。
-
-上传完成后重新登录服务器：
+SSH 登录服务器：
 
 ```powershell
 ssh ubuntu@106.53.3.215
 ```
 
-进入项目目录：
+clone 项目：
 
 ```bash
+cd /home/ubuntu
+git clone https://gitee.com/mabataki7777777/campus-mindcare-ai-online.git campus-mindcare-AI
+cd campus-mindcare-AI
+```
+
+注意：`.env` 被 `.gitignore` 忽略，不会随 git 上传，需要在服务器上手动创建。配置方法见下一节。
+
+### 后续更新代码
+
+本地改完代码后，先推到 Gitee：
+
+```powershell
+# 本机 PowerShell
+cd E:\campus-mindcare-AI
+git add .
+git commit -m "更新说明"
+git push
+```
+
+服务器拉取最新代码并重启：
+
+```bash
+# 服务器
 cd /home/ubuntu/campus-mindcare-AI
+git pull
+docker compose up --build -d
 ```
 
 ## 配置服务器环境变量
@@ -468,17 +475,22 @@ docker compose up --build -d
 - 安全组是否放行 `22`
 - 密码是否是服务器登录密码，不是云平台账号密码
 
-### scp 报错找不到 E:
+### git clone 或 git pull 失败
 
-说明你在服务器里执行了 `scp`，服务器不认识 Windows 路径。
+先检查：
 
-正确做法是先退出服务器：
+- 服务器是否能访问 gitee.com
+- Gitee 仓库是否是公开仓库，或者需要配置 SSH key
+- 本地是否已经 `git push` 到 Gitee
+
+如果是私有仓库，在服务器上配置 Gitee 的 SSH key：
 
 ```bash
-exit
+ssh-keygen -t ed25519 -C "your_email@example.com"
+cat ~/.ssh/id_ed25519.pub
 ```
 
-然后在 Win11 PowerShell 执行 `scp`。
+把输出的公钥添加到 Gitee 账号的 SSH 设置里。
 
 ### docker compose 提示环境变量缺失
 
