@@ -1,57 +1,71 @@
-# 统一编排前端、后端、数据库和入口 Nginx。
-# 在本目录执行：docker compose up --build -d
+# ============================================================
+# 校园AI心理陪伴平台 — Docker Compose 编排文件
+# 三容器架构：MySQL + Node.js 后端 + Nginx（前端静态资源 + 反向代理）
+# 使用方式：在本目录执行 docker compose up --build -d
+# ============================================================
+
 services:
+  # ==================== MySQL 数据库 ====================
   mysql:
     image: mysql:8.4
     container_name: mindcare-mysql
-    restart: unless-stopped
+    restart: unless-stopped # 容器异常退出时自动重启
     environment:
+      # :? 语法表示变量未设置时直接报错退出，防止空密码启动
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?copy .env.example to .env and set MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:?copy .env.example to .env and set MYSQL_DATABASE}
     volumes:
-      # 数据库数据放到 Docker volume，避免容器删除后数据丢失。
+      # 数据库数据持久化到 Docker volume，避免容器删除后数据丢失
       - mysql_data:/var/lib/mysql
     networks:
       - mindcare_net
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 768M # 限制内存，防止 MySQL 占满宿主机
     healthcheck:
+      # 用 mysqladmin ping 检测 MySQL 是否就绪
+      # 后端 depends_on 会等待此健康检查通过后才启动
       test:
         [
           "CMD-SHELL",
           "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent",
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      interval: 10s # 每 10 秒检测一次
+      timeout: 5s # 单次检测超时 5 秒
+      retries: 10 # 最多重试 10 次（约 100 秒后判定不健康）
 
+  # ==================== Node.js 后端 ====================
   backend:
     build:
-      context: ./ai-psychological-server
-      dockerfile: Dockerfile
+      context: ./ai-psychological-server # 后端项目目录
+      dockerfile: Dockerfile # 多阶段构建：build 编译 TS → runtime 只保留生产依赖
     container_name: mindcare-backend
     restart: unless-stopped
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_healthy # 等 MySQL 健康检查通过后再启动，避免连接失败
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_HOST: mysql
+      # 数据库连接参数（容器间通过服务名 mysql 通信，无需真实 IP）
+      DATABASE_HOST: mysql # 对应 mysql 服务的容器名
       DATABASE_PORT: 3306
       DATABASE_USER: root
       DATABASE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?copy .env.example to .env and set MYSQL_ROOT_PASSWORD}
       DATABASE_NAME: ${MYSQL_DATABASE:?copy .env.example to .env and set MYSQL_DATABASE}
+      # Prisma 连接字符串，格式：mysql://用户:密码@主机:端口/数据库
       DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:?copy .env.example to .env and set MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:?copy .env.example to .env and set MYSQL_DATABASE}
+      # JWT 密钥，用于用户认证 token 的签发和验证
       JWT_SECRET: ${JWT_SECRET:?copy .env.example to .env and set JWT_SECRET}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      # DeepSeek AI API 配置，:- 表示未设置时使用默认值
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-} # 允许为空（非 AI 功能仍可正常使用）
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      # 上传文件存储目录
       UPLOAD_DIR: uploads
     volumes:
-      # 后端上传文件持久化保存。
+      # 用户上传的文件（头像、附件等）持久化保存，不随容器销毁丢失
       - backend_uploads:/app/uploads
     networks:
       - mindcare_net
@@ -59,30 +73,40 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "1.0"
+          cpus: "1.0" # 限制 CPU 使用，防止 AI 流式请求占满资源
+    # 启动命令：先执行数据库迁移，再启动应用
+    # prisma migrate deploy 只执行未应用的迁移，不会重置数据
     command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
+  # ==================== Nginx（前端 + 反向代理）====================
   nginx:
     build:
-      context: ./ai-vue
-      dockerfile: Dockerfile
+      context: ./ai-vue # 前端项目目录
+      dockerfile: Dockerfile # 多阶段构建：build 生成 dist → runtime 用 nginx 托管
     container_name: mindcare-nginx
     restart: unless-stopped
     depends_on:
-      - backend
+      - backend # 依赖后端服务（不做健康检查，只要后端容器启动即可）
     ports:
-      # 使用 80 端口，配合域名直接访问，不用带端口号。
+      # 宿主机 80 端口映射到容器 80 端口
+      # 配合域名可直接访问，无需带端口号
+      # 后端 3000 端口不暴露公网，只通过 Nginx 反向代理转发
       - "80:80"
     volumes:
-      # 只覆盖 Nginx 配置，前端 dist 已在镜像构建阶段复制进去。
+      # 只挂载 Nginx 配置文件（:ro 只读），前端 dist 已在镜像构建阶段复制进去
+      # 修改 nginx.conf 后需 docker compose restart nginx 生效
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - mindcare_net
 
+# ==================== 数据卷 ====================
 volumes:
-  mysql_data:
-  backend_uploads:
+  mysql_data: # MySQL 数据持久化，容器删除后数据不丢失
+  backend_uploads: # 用户上传文件持久化
 
+# ==================== 网络 ====================
 networks:
   mindcare_net:
-    driver: bridge
+    driver: bridge # 桥接网络，三个容器通过服务名互相访问
+    # mysql 容器可通过 "mysql" 主机名访问
+    # backend 容器可通过 "backend" 主机名访问

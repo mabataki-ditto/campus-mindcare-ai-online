@@ -78,4 +78,19 @@ const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
     background-color: #fff;
   }
 }
+
+@media (max-width: 768px) {
+  .auth-layout {
+    flex-direction: column;
+
+    .left-section {
+      display: none;
+    }
+
+    .right-section {
+      height: 100vh;
+      padding: 20px;
+    }
+  }
+}
 </style>

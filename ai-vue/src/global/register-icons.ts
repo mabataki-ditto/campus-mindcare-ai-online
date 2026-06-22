@@ -2,6 +2,7 @@ import type { App } from 'vue'
 import {
   Expand,
   ArrowDown,
+  ArrowDownBold,
   Back,
   Plus,
   Promotion,
@@ -21,6 +22,7 @@ import {
 const icons = {
   Expand,
   ArrowDown,
+  ArrowDownBold,
   Back,
   Plus,
   Promotion,

@@ -1,0 +1,47 @@
+# ============================================================
+# systemd 服务单元文件 — 管理 webhook 接收服务
+#
+# 安装方法（在服务器上执行）：
+#   sudo cp webhook/webhook.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable webhook
+#   sudo systemctl start webhook
+#
+# 查看状态：sudo systemctl status webhook
+# 查看日志：sudo journalctl -u webhook -f
+# 重启服务：sudo systemctl restart webhook
+# ============================================================
+
+[Unit]
+Description=MindCare Webhook Server (auto-deploy on Gitee push)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+
+# 项目根目录（webhook/ 的上一级）
+WorkingDirectory=/home/ubuntu/campus-mindcare-AI
+
+# 从 .env 读取 WEBHOOK_SECRET 和 WEBHOOK_PORT
+EnvironmentFile=/home/ubuntu/campus-mindcare-AI/.env
+
+# 启动 webhook 服务（用服务器自带的 node，无需 npm install）
+ExecStart=/usr/bin/node /home/ubuntu/campus-mindcare-AI/webhook/server.js
+
+# 崩溃后自动重启，5 秒间隔避免频繁重启
+Restart=always
+RestartSec=5
+
+# 日志输出到 systemd journal，用 journalctl 查看
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webhook
+
+# 安全限制：不允许写入新目录，但允许执行部署脚本
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -8,8 +8,10 @@
         </h2>
         <p class="description">每个深夜，每个焦虑的时刻，我们都在这里。不必独自承受，让心与心的连接温暖您的每一天</p>
         <div class="hero-actions">
-          <el-button size="large" @click="handleNavigate('/consultation')">开始倾诉，获得陪伴</el-button>
-          <el-button size="large" style="border-color: #fff" color="transparent" @click="handleNavigate('/emotion-diary')">记录心情，释放情感</el-button>
+          <button type="button" class="hero-button" @click="handleNavigate('/consultation')">开始倾诉，获得陪伴</button>
+          <button type="button" class="hero-button btn-secondary" @click="handleNavigate('/emotion-diary')">
+            记录心情，释放情感
+          </button>
         </div>
       </div>
       <div class="robot">
@@ -29,10 +31,10 @@ const loginStore = useLoginStore()
 
 const handleNavigate = (path) => {
   if (!loginStore.token) {
-    router.push('/auth/login')
-  } else {
-    router.push(path)
+    loginStore.loadLocalCache()
   }
+
+  router.push(loginStore.token ? path : '/auth/login')
 }
 </script>
 
@@ -63,6 +65,37 @@ const handleNavigate = (path) => {
       }
       .hero-actions {
         margin-top: 30px;
+        display: flex;
+        gap: 16px;
+        .hero-button {
+          min-width: 180px;
+          height: 40px;
+          padding: 0 19px;
+          border: 1px solid #dcdfe6;
+          border-radius: 4px;
+          background: #fff;
+          color: #606266;
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 1;
+          cursor: pointer;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+          &:active {
+            opacity: 0.85;
+          }
+        }
+        .btn-secondary {
+          background-color: transparent;
+          border-color: #fff;
+          color: #fff;
+          &:hover,
+          &:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+            color: #fff;
+          }
+        }
       }
     }
     .robot {
@@ -100,7 +133,6 @@ const handleNavigate = (path) => {
         }
         .hero-actions {
           margin-top: 20px;
-          display: flex;
           flex-direction: column;
           gap: 10px;
         }

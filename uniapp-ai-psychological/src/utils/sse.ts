@@ -1,10 +1,11 @@
+import { createParser } from "eventsource-parser";
 import { BASE_URL } from "@/config";
 import { LOGIN_TOKEN } from "@/global/constants";
 import http from "./request";
 
-function arrayBufferToString(buffer: ArrayBuffer): string {
+function decodeChunk(buffer: ArrayBuffer, decoder: TextDecoder): string {
   try {
-    return new TextDecoder().decode(new Uint8Array(buffer));
+    return decoder.decode(new Uint8Array(buffer), { stream: true });
   } catch {
     return "";
   }
@@ -15,7 +16,6 @@ export function requestSSE(options: any) {
   const token = uni.getStorageSync(LOGIN_TOKEN);
   const tokenStr =
     typeof token === "string" ? token.replace(/^"|"$/g, "") : token || "";
-  let buffer = "";
   let doneCalled = false;
   const safeOnDone = () => {
     if (!doneCalled) {
@@ -51,20 +51,15 @@ export function requestSSE(options: any) {
 
   // 检查是否支持 onChunkedData（仅 H5 和部分小程序支持）
   if ((requestTask as any).onChunkedData) {
-    (requestTask as any).onChunkedData((res: any) => {
-      const text = arrayBufferToString(res.data);
-      buffer += text;
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") {
+    const decoder = new TextDecoder();
+    const parser = createParser({
+      onEvent: (event) => {
+        if (event.data === "[DONE]") {
           safeOnDone();
           return;
         }
         try {
-          const parsed = JSON.parse(jsonStr);
+          const parsed = JSON.parse(event.data);
           const delta = parsed.choices?.[0]?.delta;
           if (delta?.content) onMessage && onMessage(delta.content);
           if (delta?.tool_calls)
@@ -77,7 +72,11 @@ export function requestSSE(options: any) {
         } catch {
           /* skip */
         }
-      }
+      },
+    });
+
+    (requestTask as any).onChunkedData((res: any) => {
+      parser.feed(decodeChunk(res.data, decoder));
     });
   }
 
@@ -89,6 +88,14 @@ export async function requestSSEH5(options: any) {
   const token = uni.getStorageSync(LOGIN_TOKEN);
   const tokenStr =
     typeof token === "string" ? token.replace(/^"|"$/g, "") : token || "";
+  let doneCalled = false;
+  const safeOnDone = () => {
+    if (!doneCalled) {
+      doneCalled = true;
+      onDone && onDone();
+    }
+  };
+
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -97,24 +104,17 @@ export async function requestSSEH5(options: any) {
     });
     if (!response.ok) throw new Error(`API 请求失败: ${response.status}`);
     const reader = response.body?.getReader();
-    if (!reader) throw new Error('无法读取流式响应');
+    if (!reader) throw new Error("无法读取流式响应");
+
     const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") {
-          onDone && onDone();
+    const parser = createParser({
+      onEvent: (event) => {
+        if (event.data === "[DONE]") {
+          safeOnDone();
           return;
         }
         try {
-          const parsed = JSON.parse(jsonStr);
+          const parsed = JSON.parse(event.data);
           const delta = parsed.choices?.[0]?.delta;
           if (delta?.content) onMessage && onMessage(delta.content);
           if (delta?.tool_calls)
@@ -125,9 +125,15 @@ export async function requestSSEH5(options: any) {
         } catch {
           /* skip */
         }
-      }
+      },
+    });
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parser.feed(decoder.decode(value, { stream: true }));
     }
-    onDone && onDone();
+    safeOnDone();
   } catch (err: any) {
     onError && onError(err);
   }

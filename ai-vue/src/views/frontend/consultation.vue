@@ -119,6 +119,7 @@ onUnmounted(() => {
   .consultation-container {
     padding: 10px;
     gap: 10px;
+    height: calc(100dvh - 120px);
   }
   .sidebar-overlay {
     display: block;

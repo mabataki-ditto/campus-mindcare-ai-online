@@ -195,23 +195,18 @@ defineEmits(['new-session', 'send', 'update:userMessage', 'file-select', 'file-r
 
 @media (max-width: 768px) {
   .chat-main {
+    border-radius: 12px;
+    overflow: hidden;
+
     .chat-header {
       padding: 14px 15px;
-      .header-left {
-        .chat-avatar {
-          width: 36px;
-          height: 36px;
-          margin-right: 10px;
-        }
-        .chat-info {
-          h2 {
-            font-size: 16px;
-          }
-          p {
-            font-size: 12px;
-          }
-        }
-      }
+      flex-shrink: 0;
+    }
+
+    :deep(.chat-messages) {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
     }
   }
 }

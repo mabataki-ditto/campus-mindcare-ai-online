@@ -2,8 +2,7 @@ import { ref } from "vue";
 import { startSession, saveMessage } from "@/api/consultation";
 import { toolDefinitions, executeToolCall } from "./useToolCalls";
 import { getAIChatUrl } from "@/api/ai";
-import { requestSSE, requestSSEH5, requestNonStream } from "@/utils/sse";
-import { BASE_URL } from "@/config";
+import { requestSSEH5, requestNonStream } from "@/utils/sse";
 
 const SYSTEM_PROMPT = `你是"曼波"，一位温柔专业的AI心理健康助手。你的职责是：
 1. 以温暖、耐心的态度陪伴用户

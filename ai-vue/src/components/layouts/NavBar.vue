@@ -6,11 +6,11 @@
           <Expand />
         </el-icon>
       </el-button>
-      <el-breadcrumb separator="/">
+      <!-- <el-breadcrumb separator="/">
         <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.url" :to="{ path: item.url }">
           {{ item.name }}
         </el-breadcrumb-item>
-      </el-breadcrumb>
+      </el-breadcrumb> -->
     </div>
     <div class="flex-box">
       <el-dropdown @command="handleCommand" class="user-dropdown">

@@ -14,15 +14,13 @@
         <el-button v-if="isLoggedIn" class="logout-btn" @click="handleLogout">退出登录</el-button>
         <template v-else>
           <router-link to="/auth/login" class="nav-link">登录</router-link>
-          <router-link to="/auth/register" class="nav-link">
-            <el-button type="primary">注册</el-button>
-          </router-link>
+          <el-button type="primary" @click="router.push('/auth/register')">注册</el-button>
         </template>
       </div>
-      <!-- 移动端汉堡按钮 -->
-      <el-button class="menu-toggle" circle @click="mobileMenuOpen = !mobileMenuOpen">
-        <el-icon><component :is="mobileMenuOpen ? 'Close' : 'Menu'" /></el-icon>
-      </el-button>
+      <!-- 移动端下拉菜单按钮 -->
+      <div class="menu-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
+        <ArrowDownBold class="menu-arrow" :class="{ 'is-open': mobileMenuOpen }" />
+      </div>
     </div>
     <!-- 移动端下拉菜单 -->
     <div v-show="mobileMenuOpen" class="mobile-menu">
@@ -39,9 +37,7 @@
       </template>
       <template v-else>
         <router-link to="/auth/login" class="mobile-link" @click="mobileMenuOpen = false">登录</router-link>
-        <router-link to="/auth/register" class="mobile-link" @click="mobileMenuOpen = false">
-          <el-button type="primary">注册</el-button>
-        </router-link>
+        <el-button type="primary" @click="handleRegisterMobile">注册</el-button>
       </template>
     </div>
     <div class="main-content">
@@ -55,8 +51,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { ArrowDownBold } from '@element-plus/icons-vue'
 import { logout } from '@/service/admin/admin'
 import useLoginStore from '@/stores/login/login'
+import router from '@/router'
 
 const loginStore = useLoginStore()
 
@@ -77,6 +75,11 @@ const handleLogout = () => {
 const handleLogoutMobile = () => {
   mobileMenuOpen.value = false
   handleLogout()
+}
+
+const handleRegisterMobile = () => {
+  mobileMenuOpen.value = false
+  router.push('/auth/register')
 }
 
 onMounted(() => {
@@ -128,7 +131,6 @@ onMounted(() => {
   .mobile-menu {
     display: none;
   }
-
   .footer-container {
     background: #1f2937;
     color: white;
@@ -157,6 +159,28 @@ onMounted(() => {
       }
       .menu-toggle {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        cursor: pointer;
+        user-select: none;
+        .menu-arrow {
+          width: 22px;
+          height: 22px;
+          display: block;
+          color: #4a9c8c;
+          transition: transform 0.3s ease;
+          &.is-open {
+            transform: rotate(180deg);
+          }
+        }
+        &:active {
+          opacity: 0.75;
+        }
       }
     }
     .mobile-menu {

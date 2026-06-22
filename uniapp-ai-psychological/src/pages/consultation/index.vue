@@ -244,6 +244,7 @@ const formatTime = (time: string) => {
   background: #f5f5f5;
 }
 .session-view {
+  --session-horizontal-gap: 28rpx;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -256,7 +257,7 @@ const formatTime = (time: string) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24rpx 28rpx;
+    padding: 24rpx var(--session-horizontal-gap);
     background: #fff;
     .title {
       font-size: 36rpx;
@@ -274,19 +275,23 @@ const formatTime = (time: string) => {
   .session-list {
     flex: 1;
     height: 0; /* 让 scroll-view 正确计算高度 */
-    padding: 0 24rpx;
+    padding: 0;
+    overflow-x: hidden; /* 防止横向滚动条挤压内容 */
+    box-sizing: border-box;
     .session-item {
       background: #fff;
       border-radius: 16rpx;
       padding: 24rpx 20rpx;
-      margin-bottom: 16rpx;
+      margin: 0 var(--session-horizontal-gap) 16rpx;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      box-sizing: border-box;
       .session-info {
         flex: 1;
-        min-width: 0; /* 允许子元素收缩 */
+        min-width: 0;
         margin-right: 12rpx;
+        text-align: left; /* 强制左对齐 */
         .session-title {
           font-size: 30rpx;
           color: #303133;
@@ -296,6 +301,7 @@ const formatTime = (time: string) => {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          text-align: left;
         }
         .session-preview {
           font-size: 24rpx;
@@ -305,6 +311,7 @@ const formatTime = (time: string) => {
           white-space: nowrap;
           display: block;
           max-width: 100%;
+          text-align: left;
         }
       }
       .session-meta {
@@ -312,6 +319,7 @@ const formatTime = (time: string) => {
         flex-direction: column;
         align-items: flex-end;
         flex-shrink: 0;
+        padding-top: 4rpx;
         .session-time {
           font-size: 20rpx;
           color: #909399;

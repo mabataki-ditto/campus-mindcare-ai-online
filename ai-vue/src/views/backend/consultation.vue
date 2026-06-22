@@ -258,7 +258,7 @@ const viewSessionDetail = (row: any) => {
 
 // 预警记录相关
 const loadAlerts = () => {
-  hyRequest
+  return hyRequest
     .get({
       url: '/psychological-chat/alerts',
       params: { currentPage: alertPagination.currentPage, size: alertPagination.size }
@@ -319,6 +319,7 @@ onMounted(async () => {
   color: #666;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 .session-detail {

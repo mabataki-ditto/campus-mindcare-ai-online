@@ -3,6 +3,7 @@ import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 import prettier from 'eslint-config-prettier'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import tsParser from '@typescript-eslint/parser'
 
 export default [
   {
@@ -33,6 +34,16 @@ export default [
         }
       ],
       'prettier/prettier': 'warn'
+    }
+  },
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parser: pluginVue.configs['flat/recommended'].parser,
+      parserOptions: {
+        parser: tsParser,
+        extraFileExtensions: ['.vue']
+      }
     }
   }
 ]

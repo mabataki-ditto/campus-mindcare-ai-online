@@ -252,7 +252,24 @@ git commit -m "更新说明"
 git push
 ```
 
-服务器拉取最新代码并重启：
+**两种更新方式：**
+
+#### 方式 A：自动部署（推荐，已配置 Webhook）
+
+push 到 Gitee 后，Gitee 会自动调用服务器上的 webhook 服务，服务器自动执行 `git pull && docker compose up --build -d`，无需 SSH 登录。
+
+配置方法见下方 [Webhook 自动部署](#webhook-自动部署) 章节。
+
+查看部署日志：
+
+```bash
+# 服务器上查看 webhook 服务日志
+sudo journalctl -u webhook -f
+```
+
+#### 方式 B：手动部署（Webhook 故障时备用）
+
+SSH 登录服务器后手动执行：
 
 ```bash
 # 服务器
@@ -260,6 +277,102 @@ cd /home/ubuntu/campus-mindcare-AI
 git pull
 docker compose up --build -d
 ```
+
+## Webhook 自动部署
+
+### 原理
+
+```
+本地 git push → Gitee 仓库
+                    ↓
+              Gitee 调用 Webhook
+                    ↓
+   POST http://106.53.3.215:9000/webhook (带 X-Gitee-Token)
+                    ↓
+      webhook/server.js 验证 token
+                    ↓
+      执行 webhook/deploy.sh
+                    ↓
+   git pull && docker compose up --build -d
+```
+
+### 服务器一次性配置
+
+#### 1. 确认 `.env` 里有 webhook 配置
+
+```bash
+# 服务器
+cd /home/ubuntu/campus-mindcare-AI
+grep WEBHOOK .env
+```
+
+如果没有，手动追加（`WEBHOOK_SECRET` 用 `openssl rand -hex 16` 生成）：
+
+```env
+WEBHOOK_SECRET=生成的随机字符串
+WEBHOOK_PORT=9000
+```
+
+#### 2. 给 deploy.sh 执行权限
+
+```bash
+chmod +x webhook/deploy.sh
+```
+
+#### 3. 安装 systemd 服务
+
+```bash
+sudo cp webhook/webhook.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable webhook
+sudo systemctl start webhook
+```
+
+#### 4. 验证服务运行
+
+```bash
+# 查看服务状态
+sudo systemctl status webhook
+
+# 健康检查（返回 JSON 即正常）
+curl http://localhost:9000/
+
+# 查看实时日志
+sudo journalctl -u webhook -f
+```
+
+#### 5. 腾讯云安全组放行 9000 端口
+
+在腾讯云控制台 → 安全组 → 入站规则，添加：
+
+- 协议：TCP
+- 端口：9000
+- 来源：`0.0.0.0/0`（或限制为 Gitee 的 IP 段更安全）
+
+#### 6. 配置 Gitee Webhook
+
+进入 Gitee 仓库 → 管理 → WebHooks → 添加：
+
+- URL：`http://106.53.3.215:9000/webhook`
+- 密码：填 `.env` 里的 `WEBHOOK_SECRET` 值
+- 触发事件：勾选 `Push`
+- 测试：点"测试"按钮，服务器日志应出现 `📨 收到 webhook 推送`
+
+### 验证自动部署
+
+1. 本地改一行代码（比如改个注释）
+2. `git commit && git push`
+3. 服务器上 `sudo journalctl -u webhook -f` 应看到部署日志
+4. 浏览器访问 `http://106.53.3.215`，强制刷新（Ctrl+F5）看到更新
+
+### Webhook 排查
+
+| 现象 | 排查 |
+|------|------|
+| Gitee 测试返回 403 | `WEBHOOK_SECRET` 不一致，对比 Gitee 和 `.env` |
+| Gitee 测试返回连接超时 | 安全组没放行 9000，或服务没启动 |
+| webhook 收到但没部署 | `sudo journalctl -u webhook -f` 看日志 |
+| 部署失败 | `docker compose logs -f` 看容器日志，常见是 `.env` 缺值或 Dockerfile 报错 |
 
 ## 配置服务器环境变量
 
@@ -549,3 +662,4 @@ docker compose up --build -d
 - `.env` 里有真实配置
 - `.env.example` 不保留真实密钥
 - 能用 `docker compose logs -f` 定位错误
+
