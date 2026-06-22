@@ -3,7 +3,7 @@
     <div class="content">
       <div class="text">
         <h2 class="title">
-          一次温暖的对话<br />
+          一次温暖的对话曼波曼波<br />
           <span class="highlight-text">化孤单为慰藉</span>
         </h2>
         <p class="description">每个深夜，每个焦虑的时刻，我们都在这里。不必独自承受，让心与心的连接温暖您的每一天</p>
