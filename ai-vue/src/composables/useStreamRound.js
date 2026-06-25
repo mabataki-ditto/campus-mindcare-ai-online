@@ -43,7 +43,7 @@ export async function streamRound({ allMessages, aiMessage, signal }) {
   const contentType = response.headers.get('Content-Type') || ''
   if (contentType.includes('application/json')) {
     const data = await response.json()
-    throw new Error(data.message || '请求失败')
+    throw new Error(data.msg || '请求失败')
   }
 
   const reader = response.body.getReader()

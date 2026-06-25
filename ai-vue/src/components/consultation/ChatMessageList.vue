@@ -127,9 +127,30 @@ watch(
     }
 
     &.user-message {
+      flex-direction: row-reverse;
+      align-self: flex-end;
+
       .message-avatar {
         background: linear-gradient(135deg, #6b7280, #4b5563);
         box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+      }
+
+      .message-content {
+        align-items: flex-end;
+
+        .message-bubble {
+          background: linear-gradient(135deg, #fb923c 0%, #f59e0b 100%);
+          border-color: rgba(251, 146, 60, 0.3);
+          color: #fff;
+
+          .user-text {
+            color: #fff;
+          }
+        }
+
+        .message-time {
+          text-align: right;
+        }
       }
     }
 

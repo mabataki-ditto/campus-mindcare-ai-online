@@ -25,7 +25,7 @@
             <div class="info">
               <p class="title">心情档案</p>
               <p class="number">{{ aiData.systemOverview.totalDiaries }}</p>
-              <p class="subtitle-title">活跃用户：{{ aiData.systemOverview.todayNewDiaries }}</p>
+              <p class="subtitle-title">新日记：{{ aiData.systemOverview.todayNewDiaries }}</p>
             </div>
           </div>
         </el-card>
@@ -40,7 +40,7 @@
             <div class="info">
               <p class="title">咨询会话</p>
               <p class="number">{{ aiData.systemOverview.totalSessions }}</p>
-              <p class="subtitle-title">今日新增{{ aiData.systemOverview.todayNewSessions }}</p>
+              <p class="subtitle-title">今日新增：{{ aiData.systemOverview.todayNewSessions }}</p>
             </div>
           </div>
         </el-card>
@@ -82,10 +82,6 @@
               <div class="stat-item">
                 <div class="stat-label">总会话数</div>
                 <div class="stat-value">{{ aiData.consultationStats.totalSessions }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">平均时长</div>
-                <div class="stat-value">{{ aiData.consultationStats.avgDurationMinutes }}</div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">活跃用户</div>

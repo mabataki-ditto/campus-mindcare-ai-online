@@ -11,10 +11,6 @@ const router = Router()
 
 // 允许上传的文件类型白名单
 const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -46,7 +42,7 @@ const upload = multer({
     if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       cb(null, true)
     } else {
-      cb(new Error(`不支持的文件类型: ${file.mimetype}，仅允许图片和常见文档格式`))
+      cb(new Error(`不支持的文件类型: ${file.mimetype}，仅允许 PDF 和常见文档格式`))
     }
   }
 })

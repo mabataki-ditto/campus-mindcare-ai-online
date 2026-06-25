@@ -7,7 +7,7 @@
       <view class="session-header" :style="{ paddingRight: capsuleRight }"
         ><text class="title">AI å¿ƒç†é™ªä¼´</text
         ><view class="new-btn" @tap="handleNewSession"
-          ><text>+ æ–°å¯¹è¯</text></view
+          ><text>+ æ–°å¯¹è¯?/text></view
         ></view
       >
       <scroll-view scroll-y class="session-list">
@@ -33,7 +33,7 @@
           >
         </view>
         <view v-if="sessionList.length === 0" class="empty-tip"
-          ><text>æš‚æ— å¯¹è¯è®°å½•ï¼Œç‚¹å‡»"æ–°å¯¹è¯"å¼€å§‹èŠå¤©</text></view
+          ><text>æš‚æ— å¯¹è¯è®°å½•ï¼Œç‚¹å‡?æ–°å¯¹è¯?å¼€å§‹èŠå¤?/text></view
         >
       </scroll-view>
     </view>
@@ -58,7 +58,7 @@
           :key="msg.id"
           :id="`msg-${msg.id}`"
         >
-          <!-- AI æ­£åœ¨è¾“å…¥æ—¶ï¼Œæœ€åä¸€æ¡ AI æ¶ˆæ¯ç”± currentReply æ‰“å­—åŠ¨ç”»å•ç‹¬æ˜¾ç¤ºï¼Œæ­¤å¤„è·³è¿‡ -->
+          <!-- AI æ­£åœ¨è¾“å…¥æ—¶ï¼Œæœ€åä¸€æ?AI æ¶ˆæ¯ç”?currentReply æ‰“å­—åŠ¨ç”»å•ç‹¬æ˜¾ç¤ºï¼Œæ­¤å¤„è·³è¿?-->
           <template
             v-if="
               !(
@@ -73,7 +73,7 @@
             </view>
             <view v-else class="msg-row ai">
               <view class="ai-avatar"
-                ><text class="ai-avatar-text">æ›¼</text></view
+                ><text class="ai-avatar-text">æ›?/text></view
               >
               <view class="msg-bubble ai-bubble"
                 ><rich-text :nodes="msg.content"
@@ -82,10 +82,10 @@
           </template>
         </view>
         <view v-if="isAiTyping && currentReply" class="msg-row ai">
-          <view class="ai-avatar"><text class="ai-avatar-text">æ›¼</text></view>
+          <view class="ai-avatar"><text class="ai-avatar-text">æ›?/text></view>
           <view class="msg-bubble ai-bubble"
             ><rich-text :nodes="currentReply" /><text class="typing-indicator"
-              >â–</text
+              >â–?/text
             ></view
           >
         </view>
@@ -98,7 +98,7 @@
         <input
           v-model="userMessage"
           class="chat-input"
-          placeholder="è¯´ç‚¹ä»€ä¹ˆ..."
+          placeholder="è¯´ç‚¹ä»€ä¹?.."
           confirm-type="send"
           @confirm="handleSend"
           :disabled="isAiTyping"
@@ -107,13 +107,13 @@
           class="send-btn"
           :class="{ disabled: !userMessage.trim() || isAiTyping }"
           @tap="handleSend"
-          ><text>å‘é€</text></view
+          ><text>å‘é€?/text></view
         >
       </view>
       <!-- é¢„è­¦å¡ç‰‡ -->
       <view v-if="alertState.visible" class="alert-overlay" @tap.stop>
         <view class="alert-card" :class="`alert-level-${alertState.riskLevel}`">
-          <text class="alert-title">æˆ‘ä»¬å…³æ³¨åˆ°ä½ å¯èƒ½éœ€è¦å¸®åŠ©</text>
+          <text class="alert-title">æˆ‘ä»¬å…³æ³¨åˆ°ä½ å¯èƒ½éœ€è¦å¸®åŠ?/text>
           <text class="alert-reason">{{ alertState.reason }}</text>
           <view class="hotline-list">
             <view class="hotline-item" @tap="callHotline('400-161-9995')"
@@ -140,6 +140,7 @@
 </template>
 
 <script setup lang="ts">
+// Ò³ÃæÂß¼­²ğ³É¶à¸ö composable£º»á»°ÁĞ±í¡¢Á÷Ê½Êä³ö¡¢ÇéĞ÷·ÖÎö£¬¸÷×Ô¸ºÔğÒ»¿éÖ°Ôğ¡£
 import { ref, computed, nextTick, watch } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { useConsultationSessions } from "@/composables/useConsultationSessions";
@@ -147,6 +148,7 @@ import { useConsultationStream } from "@/composables/useConsultationStream";
 import { useConsultationEmotion } from "@/composables/useConsultationEmotion";
 import { alertState } from "@/composables/useToolCalls";
 
+// »á»°ÁĞ±íÏà¹ØÄÜÁ¦£ºĞÂ½¨»á»°¡¢À­È¡·ÖÒ³¡¢ÇĞ»»»á»°¡¢É¾³ı»á»°¡£
 const {
   currentSession,
   sessionList,
@@ -156,7 +158,11 @@ const {
   handleSessionClick,
   handleDeleteSession,
 } = useConsultationSessions();
+
+// µ±Ç°»á»°µÄÇéĞ÷ĞÅÏ¢µ¥¶À¹ÜÀí£¬ÇĞ»»»á»°Ê±¸´ÓÃÍ¬Ò»Ì×¼ÓÔØÂß¼­¡£
 const { currentEmotion, loadSessionEmotion } = useConsultationEmotion();
+
+// ÓÃ»§ÊäÈë¡¢AI Êä³ö×´Ì¬¡¢¹¤¾ßµ÷ÓÃ×´Ì¬¶¼½»¸øÁ÷Ê½Êä³ö composable Í³Ò»¹ÜÀí¡£
 const { userMessage, isAiTyping, toolCallStatus, sendMessage } =
   useConsultationStream({
     currentSession,
@@ -165,17 +171,23 @@ const { userMessage, isAiTyping, toolCallStatus, sendMessage } =
     loadSessionEmotion,
   });
 
+// ¿ØÖÆÏûÏ¢ÁĞ±í×Ô¶¯¹ö¶¯µ½µ×²¿¡£
 const scrollToId = ref("");
-const capsuleRight = ref("180rpx"); // é»˜è®¤å€¼ï¼Œå°ç¨‹åºç«¯åŠ¨æ€è®¡ç®—
+
+// Ğ¡³ÌĞò¶Ë¸ù¾İ½ºÄÒ°´Å¥µÄÎ»ÖÃ¶¯Ì¬¼ÆËãÓÒ²àÁô°×£¬H5 ÓÃÄ¬ÈÏÖµ¼´¿É¡£
+const capsuleRight = ref("180rpx");
+
+// AI ÕıÔÚÊä³öÊ±£¬×îºóÒ»Ìõ AI ÏûÏ¢µ¥¶ÀÌáÈ¡³öÀ´£¬·½±ãÕ¹Ê¾´ò×Ö¶¯»­¡£
 const currentReply = computed(() => {
   if (!isAiTyping.value) return "";
   const lastMsg = messages.value[messages.value.length - 1];
   return lastMsg?.senderType === 2 ? lastMsg.content : "";
 });
+
+// Ö»ÓĞÏûÏ¢±ä¶àÊ±²Å¹ö¶¯£¬±ÜÃâÉ¾³ıÏûÏ¢»òË¢ĞÂÒ³ÃæÊ±Îó´¥·¢¡£
 watch(
   () => messages.value.length,
   (newLen, oldLen) => {
-    // ä»…åœ¨æ¶ˆæ¯å¢åŠ æ—¶æ»šåŠ¨ï¼ˆé¿å…åˆ é™¤æ¶ˆæ¯æ—¶ä¹Ÿè§¦å‘ï¼‰
     if (newLen > oldLen) {
       nextTick(() => {
         scrollToId.value = "msg-bottom";
@@ -183,13 +195,15 @@ watch(
     }
   },
 );
+
+// Ò³ÃæÃ¿´ÎÏÔÊ¾Ê±ÖØĞÂÀ­È¡»á»°ÁĞ±í£»Ğ¡³ÌĞò¶ËË³±ãÖØĞÂ¼ÆËã½ºÄÒ°´Å¥±ÜÈÃ¾àÀë¡£
 onShow(() => {
   getSessionPage();
   // #ifdef H5
-  // H5 ç«¯ä¸éœ€è¦èƒ¶å›ŠæŒ‰é’®é€‚é…
+  // H5 Ã»ÓĞÓÒÉÏ½ÇÏµÍ³½ºÄÒ°´Å¥£¬²»ĞèÒª¶îÍâ±ÜÈÃ¡£
   // #endif
   // #ifndef H5
-  // å°ç¨‹åºç«¯ï¼šè·å–èƒ¶å›ŠæŒ‰é’®ä½ç½®
+  // Ğ¡³ÌĞò¶Ë£º¶ÁÈ¡ÏµÍ³½ºÄÒ°´Å¥Î»ÖÃ£¬¶¯Ì¬¼ÆËã±êÌâÀ¸ÓÒ²à padding¡£
   try {
     const menuButton = uni.getMenuButtonBoundingClientRect();
     if (menuButton) {
@@ -203,6 +217,7 @@ onShow(() => {
   // #endif
 });
 
+// ÏÂÃæÕâĞ©·½·¨Ö÷ÒªÓÃÓÚÄ£°åÊÂ¼ş°ó¶¨£¬±£³ÖÄ£°åÀïĞ´·¨Ö±½Ó¡¢ÇåÎú¡£
 const handleNewSession = () => createNewFrontendSession();
 const handleEnterSession = (s: any) =>
   handleSessionClick(s, loadSessionEmotion);
@@ -274,9 +289,9 @@ const formatTime = (time: string) => {
   }
   .session-list {
     flex: 1;
-    height: 0; /* è®© scroll-view æ­£ç¡®è®¡ç®—é«˜åº¦ */
+    height: 0; /* è®?scroll-view æ­£ç¡®è®¡ç®—é«˜åº¦ */
     padding: 0;
-    overflow-x: hidden; /* é˜²æ­¢æ¨ªå‘æ»šåŠ¨æ¡æŒ¤å‹å†…å®¹ */
+    overflow-x: hidden; /* é˜²æ­¢æ¨ªå‘æ»šåŠ¨æ¡æŒ¤å‹å†…å®?*/
     box-sizing: border-box;
     .session-item {
       background: #fff;
@@ -291,7 +306,7 @@ const formatTime = (time: string) => {
         flex: 1;
         min-width: 0;
         margin-right: 12rpx;
-        text-align: left; /* å¼ºåˆ¶å·¦å¯¹é½ */
+        text-align: left; /* å¼ºåˆ¶å·¦å¯¹é½?*/
         .session-title {
           font-size: 30rpx;
           color: #303133;
@@ -375,7 +390,7 @@ const formatTime = (time: string) => {
   }
   .message-list {
     flex: 1;
-    height: 0; /* è®© scroll-view æ­£ç¡®è®¡ç®—é«˜åº¦ */
+    height: 0; /* è®?scroll-view æ­£ç¡®è®¡ç®—é«˜åº¦ */
     padding: 24rpx 32rpx;
     box-sizing: border-box;
   }

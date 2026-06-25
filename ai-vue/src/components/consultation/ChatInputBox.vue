@@ -28,7 +28,7 @@
       :disabled="disabled"
       class="attach-btn"
       circle
-      title="上传报告（支持 PDF / 图片）"
+      title="上传报告（支持 PDF）"
       @click="triggerFileInput"
     >
       <el-icon><Upload /></el-icon>
@@ -36,7 +36,7 @@
     <input
       ref="fileInputRef"
       type="file"
-      accept=".pdf,.jpg,.jpeg,.png"
+      accept=".pdf"
       style="display: none"
       @change="handleFileSelect"
     />

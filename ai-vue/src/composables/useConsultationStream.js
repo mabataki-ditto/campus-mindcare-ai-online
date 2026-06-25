@@ -4,8 +4,7 @@
  * 核心功能：
  * 1. SSE 流式解析 DeepSeek API 响应
  * 2. Tool Calling（Function Calling）循环处理
- * 3. 多模态支持（文本 + 图片）
- * 4. 文件解析（PDF 提取文本）
+ * 3. 文件解析（PDF 提取文本）
  *
  * 模块拆分：
  * - useSSEStream：SSE 流解析
@@ -161,38 +160,6 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
     executeAIResponse(allMessages, sessionId)
   }
 
-  // ==================== 多模态响应 ====================
-
-  /**
-   * 启动带图片的 AI 响应（DeepSeek Vision）
-   */
-  const startAIResponseWithImage = (sessionId, userText, imageBase64) => {
-    if (isAiTyping.value) {
-      ElMessage.error('AI助手正在输入中，请稍后')
-      return
-    }
-
-    isAiTyping.value = true
-    toolCallStatus.value = ''
-
-    messages.value.push(createAiMessage())
-    const allMessages = buildMessages()
-
-    // 替换最后一条用户消息为多模态格式
-    const lastUserIdx = allMessages.findLastIndex((m) => m.role === 'user')
-    if (lastUserIdx >= 0) {
-      allMessages[lastUserIdx] = {
-        role: 'user',
-        content: [
-          { type: 'text', text: userText || '请根据这张心理测评报告与我对话' },
-          { type: 'image_url', image_url: { url: imageBase64 } }
-        ]
-      }
-    }
-
-    executeAIResponse(allMessages, sessionId)
-  }
-
   // ==================== 会话管理 ====================
 
   /** 创建新会话并发送第一条消息 */
@@ -250,40 +217,21 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
         toolCallStatus.value = ''
 
         // PDF 文件：提取文本，拼接为消息
-        if (parsed.type === 'text') {
-          const enrichedMessage = message
-            ? `以下是我的心理测评报告内容：\n${parsed.content}\n\n我的问题是：${message}`
-            : `以下是我的心理测评报告内容：\n${parsed.content}\n\n请根据报告内容与我对话`
+        const enrichedMessage = message
+          ? `以下是我的心理测评报告内容：\n${parsed.content}\n\n我的问题是：${message}`
+          : `以下是我的心理测评报告内容：\n${parsed.content}\n\n请根据报告内容与我对话`
 
-          if (currentSession.value?.status === 'TEMP') {
-            await startNewSession(enrichedMessage)
-            return
-          }
-
-          messages.value.push(createUserMessage(enrichedMessage))
-          if (currentSession.value?.sessionId) {
-            saveMessage(currentSession.value.sessionId, { senderType: 1, content: enrichedMessage }).catch(() => {})
-          }
-          startAIResponse(currentSession.value?.sessionId, enrichedMessage)
+        if (currentSession.value?.status === 'TEMP') {
+          await startNewSession(enrichedMessage)
           return
         }
 
-        // 图片文件：使用 DeepSeek Vision 多模态 API
-        if (parsed.type === 'image') {
-          const displayMessage = message || '请根据这张心理测评报告与我对话'
-
-          if (currentSession.value?.status === 'TEMP') {
-            await startNewSession(displayMessage)
-            return
-          }
-
-          messages.value.push(createUserMessage(displayMessage))
-          if (currentSession.value?.sessionId) {
-            saveMessage(currentSession.value.sessionId, { senderType: 1, content: displayMessage }).catch(() => {})
-          }
-          startAIResponseWithImage(currentSession.value?.sessionId, displayMessage, parsed.content)
-          return
+        messages.value.push(createUserMessage(enrichedMessage))
+        if (currentSession.value?.sessionId) {
+          saveMessage(currentSession.value.sessionId, { senderType: 1, content: enrichedMessage }).catch(() => {})
         }
+        startAIResponse(currentSession.value?.sessionId, enrichedMessage)
+        return
       } catch (err) {
         toolCallStatus.value = ''
         ElMessage.error(err.message || '文件解析失败')

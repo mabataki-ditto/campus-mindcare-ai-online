@@ -123,13 +123,15 @@ const handlePublish = (row: any) => {
     cancelButtonText: '取消',
     type: 'info'
   }).then(() => {
-    changeArticleStatus(row.id, { status: 1 }).then(() => {
-      ElMessage.success('发布成功')
-      handleSearch()
-    }).catch((err) => {
-      console.error('发布失败:', err)
-      ElMessage.error('发布失败')
-    })
+    changeArticleStatus(row.id, { status: 1 })
+      .then(() => {
+        ElMessage.success('发布成功')
+        handleSearch()
+      })
+      .catch((err) => {
+        console.error('发布失败:', err)
+        ElMessage.error('发布失败')
+      })
   })
 }
 
@@ -139,13 +141,15 @@ const handleUnpublish = (row: any) => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    changeArticleStatus(row.id, { status: 2 }).then(() => {
-      ElMessage.success('下线成功')
-      handleSearch()
-    }).catch((err) => {
-      console.error('下线失败:', err)
-      ElMessage.error('下线失败')
-    })
+    changeArticleStatus(row.id, { status: 2 })
+      .then(() => {
+        ElMessage.success('下线成功')
+        handleSearch()
+      })
+      .catch((err) => {
+        console.error('下线失败:', err)
+        ElMessage.error('下线失败')
+      })
   })
 }
 

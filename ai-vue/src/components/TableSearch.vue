@@ -4,8 +4,18 @@
       <template v-for="item in formItemAttrs" :key="item.prop">
         <el-col v-bind="item.col">
           <el-form-item :label="item.label" :prop="item.prop">
-            <el-input v-if="item.comp === 'input'" v-model="formData[item.prop]" :placeholder="item.placeholder" clearable />
-            <el-select v-else-if="item.comp === 'select'" v-model="formData[item.prop]" :placeholder="item.placeholder" clearable>
+            <el-input
+              v-if="item.comp === 'input'"
+              v-model="formData[item.prop]"
+              :placeholder="item.placeholder"
+              clearable
+            />
+            <el-select
+              v-else-if="item.comp === 'select'"
+              v-model="formData[item.prop]"
+              :placeholder="item.placeholder"
+              clearable
+            >
               <el-option label="全部" value="" />
               <el-option v-for="opt in item.options" :key="opt.value" :label="opt.label" :value="opt.value" />
             </el-select>

@@ -16,7 +16,14 @@ import {
   PieChart,
   ChatLineSquare,
   Message,
-  User
+  User,
+  Upload,
+  Document,
+  Close,
+  Phone,
+  InfoFilled,
+  Loading,
+  Menu
 } from '@element-plus/icons-vue'
 
 const icons = {
@@ -36,7 +43,14 @@ const icons = {
   PieChart,
   ChatLineSquare,
   Message,
-  User
+  User,
+  Upload,
+  Document,
+  Close,
+  Phone,
+  InfoFilled,
+  Loading,
+  Menu
 }
 
 export function registerIcons(app: App) {

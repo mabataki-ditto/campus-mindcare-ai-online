@@ -34,7 +34,6 @@ export async function executeToolCallLoop({ allMessages, aiMessage, signal, tool
       if (finalContent) {
         allMessages.push({ role: 'assistant', content: finalContent })
       }
-      continueLoop = false
       break
     }
 

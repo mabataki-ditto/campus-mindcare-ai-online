@@ -1,31 +1,57 @@
+/**
+ * 工具调用模块（Tool Calling）
+ *
+ * 职责：
+ * 1. 声明可被 AI 调用的工具（toolDefinitions，发给 DeepSeek）
+ * 2. 实现工具的具体执行逻辑（triggerAlert / searchKnowledgeBase）
+ * 3. 通过 toolRegistry 注册表统一管理工具，新增工具无需改 executeToolCall
+ *
+ * 设计模式：注册表模式（Registry Pattern）
+ *   - toolDefinitions：对外声明（给 AI 看）
+ *   - toolRegistry：对内实现（给前端自己用）
+ *   - executeToolCall：统一执行入口，只做"查表 → 执行"，对工具名称无感知
+ */
 import { reactive } from 'vue'
 import hyRequest from '@/service'
 
-// 预警状态（使用函数延迟初始化，避免模块导入时立即创建副作用）
+// ==================== 预警状态（跨组件共享） ====================
+
+// 使用函数延迟初始化，避免模块导入时立即创建 reactive 副作用
 let _alertState = null
 export const getAlertState = () => {
   if (!_alertState) {
     _alertState = reactive({
-      visible: false,
-      riskLevel: 0,
-      reason: ''
+      visible: false, // 是否显示预警卡片
+      riskLevel: 0, // 风险等级：1=关注, 2=预警, 3=危机
+      reason: '' // 触发原因
     })
   }
   return _alertState
 }
 
-// 兼容旧代码的直接访问方式
-export const alertState = new Proxy({}, {
-  get(_, key) {
-    return getAlertState()[key]
-  },
-  set(_, key, value) {
-    getAlertState()[key] = value
-    return true
+// 兼容旧代码的直接访问方式：通过 Proxy 代理到 getAlertState()
+// 这样 alertState.visible = true 等写法仍可使用，同时享受延迟初始化
+export const alertState = new Proxy(
+  {},
+  {
+    get(_, key) {
+      return getAlertState()[key]
+    },
+    set(_, key, value) {
+      getAlertState()[key] = value
+      return true
+    }
   }
-})
+)
 
-// 工具定义（用于 API 请求体的 tools 字段）
+// ==================== 工具声明（发给 DeepSeek 的 tools 字段） ====================
+//
+// 这里的定义是给 AI 看的"工具说明书"：
+//   - name:        工具唯一标识，AI 返回 tool_calls 时用这个名字
+//   - description: AI 据此判断"该不该调"（语义匹配）
+//   - parameters:  JSON Schema，约束 AI 生成参数的格式
+//
+// AI 根据用户输入语义匹配 description，自主决定是否调用、传什么参数。
 export const toolDefinitions = [
   {
     type: 'function',
@@ -68,13 +94,27 @@ export const toolDefinitions = [
   }
 ]
 
-// 触发预警
+// ==================== 工具执行实现 ====================
+
+/**
+ * 触发危机预警
+ *
+ * 执行流程：
+ * 1. 更新响应式 alertState → 前端 AlertCard 组件自动弹出
+ * 2. 上报后端 /psychological-chat/alert 持久化预警事件（供管理员查看）
+ * 3. 返回结果给 AI，AI 会据此在后续回复中安抚用户
+ *
+ * @param {number} riskLevel - 风险等级 1/2/3
+ * @param {string} reason    - 触发原因
+ * @returns {{success: boolean, message: string}} 返回给 AI 的工具结果
+ */
 async function triggerAlert(riskLevel, reason) {
+  // 1. 更新前端响应式状态 → 触发预警卡片显示
   alertState.visible = true
   alertState.riskLevel = riskLevel
   alertState.reason = reason
 
-  // 同步调用后端接口，记录预警事件
+  // 2. 上报后端持久化预警事件（失败不阻塞，仅记录日志）
   try {
     await hyRequest.post({
       url: '/psychological-chat/alert',
@@ -84,32 +124,55 @@ async function triggerAlert(riskLevel, reason) {
     console.error('预警记录上报失败', e)
   }
 
+  // 3. 返回给 AI，AI 看到后会以温和方式安抚用户
   return { success: true, message: '预警已触发' }
 }
 
-// 知识库检索
+/**
+ * 知识库检索（RAG 核心）
+ *
+ * 执行流程：
+ * 1. 调后端 /knowledge/article/page 按关键词检索 Top 3 文章
+ * 2. 提取 title + summary 作为事实依据
+ * 3. 返回给 AI，AI 基于这些文章生成回答（减少幻觉）
+ *
+ * RAG 闭环：用户提问 → AI 决定检索 → 注入文章到上下文 → AI 有据可依地回答
+ *
+ * @param {string} query - 检索关键词（由 AI 从用户问题中提炼）
+ * @returns {{found: boolean, articles?: Array, message?: string}}
+ */
 async function searchKnowledgeBase(query) {
   try {
     const data = await hyRequest.get({
-      url: '/knowledge/article/search',
-      params: { keyword: query }
+      url: '/knowledge/article/page',
+      params: { keyword: query, size: 3 } // 只取 Top 3，避免上下文过长
     })
 
-    if (data?.list?.length > 0) {
-      const results = data.list.slice(0, 3).map((article) => ({
+    if (data?.records?.length > 0) {
+      // 提取标题和摘要作为 AI 回答的事实依据
+      const results = data.records.map((article) => ({
         title: article.title,
         summary: article.summary || article.content?.substring(0, 200)
       }))
       return { found: true, articles: results }
     }
 
+    // 未检索到也明确告知，AI 会诚实回复"知识库暂无相关内容"
     return { found: false, message: '未找到相关知识库文章' }
   } catch (e) {
     return { found: false, message: '知识库检索失败' }
   }
 }
 
-// 工具注册表 — 所有可被模型调用的函数在此注册
+// ==================== 工具注册表（Registry Pattern 核心） ====================
+//
+// 注册表结构：{ 工具名: { execute: (args) => Promise<any> } }
+//
+// 扩展性收益：新增工具只需 3 步，零侵入主流程
+//   1. 在 toolDefinitions 加声明（给 AI 看）
+//   2. 写执行函数
+//   3. 在 toolRegistry 注册一行
+// executeToolCall 永远不用改。
 const toolRegistry = {
   triggerAlert: {
     execute: (args) => triggerAlert(args.riskLevel, args.reason)
@@ -119,14 +182,25 @@ const toolRegistry = {
   }
 }
 
-// 执行工具调用
+// ==================== 统一执行入口 ====================
+
+/**
+ * 执行工具调用（被 useToolCallLoop 调用）
+ *
+ * 只做三件事：解析参数 → 查注册表 → 执行
+ * 对工具名称完全无感知，新增工具无需修改此函数。
+ *
+ * @param {Object} toolCall - DeepSeek 返回的工具调用对象
+ *   { function: { name: string, arguments: string(JSON) } }
+ * @returns {Promise<Object>} 工具执行结果，会被序列化为 role:'tool' 消息回填上下文
+ */
 export async function executeToolCall(toolCall) {
   const { name, arguments: argsStr } = toolCall.function
   try {
-    const args = JSON.parse(argsStr)
-    const tool = toolRegistry[name]
+    const args = JSON.parse(argsStr) // AI 生成的是 JSON 字符串，需解析
+    const tool = toolRegistry[name] // 查注册表
     if (!tool) return { error: `未知工具: ${name}` }
-    return await tool.execute(args)
+    return await tool.execute(args) // 执行对应工具
   } catch (e) {
     console.error('工具调用执行失败:', e)
     return { error: `工具调用失败: ${e.message}` }

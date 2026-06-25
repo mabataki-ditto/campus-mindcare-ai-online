@@ -158,43 +158,7 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * @swagger
- * /user/add:
- *   post:
- *     tags: [用户认证]
- *     summary: 用户注册
- *     security: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [username, password]
- *             properties:
- *               username: { type: string, example: user001 }
- *               password: { type: string, example: "123456" }
- *               email: { type: string, example: user@example.com }
- *               nickname: { type: string, example: 小明 }
- *               phone: { type: string, example: "13800138000" }
- *               gender: { type: number, enum: [0, 1, 2], description: "0-未知 1-男 2-女" }
- *               userType: { type: number, enum: [1, 2], description: "1-普通用户 2-管理员" }
- *     responses:
- *       200:
- *         description: 注册成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code: { type: number, example: 200 }
- *                 data:
- *                   type: object
- *                   properties:
- *                     userId: { type: number }
- *                 message: { type: string, example: 注册成功 }
- */
+
 router.post("/add", async (req: Request, res: Response) => {
   try {
     const { username, password, email, nickname, phone, gender, userType } =
