@@ -9,14 +9,14 @@ datasource db {
 // ==================== 用户模块 ====================
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique @db.VarChar(50)
-  password  String   @db.VarChar(255)
-  nickname  String?  @db.VarChar(50)
-  email     String?  @db.VarChar(100)
-  phone     String?  @db.VarChar(20)
+  id        Int      @id @default(autoincrement())  // 用户ID
+  username  String   @unique @db.VarChar(50)   // 用户名
+  password  String   @db.VarChar(255)           // 密码（加密存储）
+  nickname  String?  @db.VarChar(50)            // 昵称
+  email     String?  @db.VarChar(100)           // 邮箱
+  phone     String?  @db.VarChar(20)            // 手机号
   gender    Int?     @default(0)   // 0=未知, 1=男, 2=女
-  avatar    String?  @db.VarChar(500)
+  avatar    String?  @db.VarChar(500)           // 头像URL
   userType  Int      @default(1)   // 1=普通用户, 2=管理员
   riskLevel Int      @default(0)   // 0=正常, 1=关注, 2=预警, 3=危机
   status    Int      @default(1)   // 1=正常, 0=禁用
@@ -30,11 +30,11 @@ model User {
 }
 
 model Role {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique @db.VarChar(50)
-  code      String   @unique @db.VarChar(50)
-  desc      String?  @db.VarChar(200)
-  status    Int      @default(1)
+  id        Int      @id @default(autoincrement())  // 角色ID
+  name      String   @unique @db.VarChar(50)   // 角色名称
+  code      String   @unique @db.VarChar(50)   // 角色编码（如admin）
+  desc      String?  @db.VarChar(200)           // 角色描述
+  status    Int      @default(1)   // 1=启用, 0=禁用
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -43,16 +43,16 @@ model Role {
 }
 
 model Menu {
-  id         Int      @id @default(autoincrement())
-  parentId   Int?     @default(0)
-  name       String   @db.VarChar(50)
+  id         Int      @id @default(autoincrement())  // 菜单ID
+  parentId   Int?     @default(0)  // 0=顶级菜单
+  name       String   @db.VarChar(50)            // 菜单名称
   type       Int      @default(1)   // 1=目录, 2=菜单, 3=按钮
-  icon       String?  @db.VarChar(100)
-  path       String?  @db.VarChar(200)
-  component  String?  @db.VarChar(200)
-  permission String?  @db.VarChar(100)
-  sort       Int      @default(0)
-  status     Int      @default(1)
+  icon       String?  @db.VarChar(100)          // 图标类名
+  path       String?  @db.VarChar(200)          // 路由路径
+  component  String?  @db.VarChar(200)          // 组件路径
+  permission String?  @db.VarChar(100)          // 权限标识
+  sort       Int      @default(0)               // 排序号
+  status     Int      @default(1)   // 1=启用, 0=禁用
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -60,20 +60,20 @@ model Menu {
 }
 
 model Department {
-  id        Int      @id @default(autoincrement())
-  parentId  Int?     @default(0)
-  name      String   @db.VarChar(50)
-  leader    String?  @db.VarChar(50)
+  id        Int      @id @default(autoincrement())  // 部门ID
+  parentId  Int?     @default(0)  // 0=顶级部门
+  name      String   @db.VarChar(50)            // 部门名称
+  leader    String?  @db.VarChar(50)            // 负责人
   sort      Int      @default(0)
-  status    Int      @default(1)
+  status    Int      @default(1)   // 1=启用, 0=禁用
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model UserRole {
   // @map 作用是为字段起一个别名，表示数据库生成的字段名
-  userId Int @map("user_id")
-  roleId Int @map("role_id")
+  userId Int @map("user_id")  // 关联用户ID
+  roleId Int @map("role_id")  // 关联角色ID
 
   //建立关联关系
   // fields：当前模型中的数据
@@ -87,8 +87,8 @@ model UserRole {
 }
 
 model RoleMenu {
-  roleId Int @map("role_id")
-  menuId Int @map("menu_id")
+  roleId Int @map("role_id")  // 关联角色ID
+  menuId Int @map("menu_id")  // 关联菜单ID
 
   role Role @relation(fields: [roleId], references: [id])
   menu Menu @relation(fields: [menuId], references: [id])
@@ -99,10 +99,10 @@ model RoleMenu {
 // ==================== 心理咨询模块 ====================
 
 model ConsultationSession {
-  id           Int      @id @default(autoincrement())
-  sessionId    String   @unique @db.VarChar(100)
-  userId       Int
-  sessionTitle String?  @db.VarChar(200)
+  id           Int      @id @default(autoincrement())  // 会话ID
+  sessionId    String   @unique @db.VarChar(100)  // 会话唯一标识UUID
+  userId       Int                        // 关联用户ID
+  sessionTitle String?  @db.VarChar(200)  // 会话标题
   status       String   @default("ACTIVE") @db.VarChar(20) // TEMP, ACTIVE, ENDED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -114,10 +114,10 @@ model ConsultationSession {
 }
 
 model ChatMessage {
-  id         Int      @id @default(autoincrement())
-  sessionId  Int
+  id         Int      @id @default(autoincrement())  // 消息ID
+  sessionId  Int                         // 关联会话ID
   senderType Int      // 1=用户, 2=AI
-  content    String   @db.Text
+  content    String   @db.Text              // 消息内容
   createdAt  DateTime @default(now())
 
   session ConsultationSession @relation(fields: [sessionId], references: [id])
@@ -126,14 +126,14 @@ model ChatMessage {
 }
 
 model SessionEmotion {
-  id                     Int      @id @default(autoincrement())
-  sessionId              Int
-  primaryEmotion         String   @db.VarChar(20)
+  id                     Int      @id @default(autoincrement())  // 情绪记录ID
+  sessionId              Int                              // 关联会话ID
+  primaryEmotion         String   @db.VarChar(20)    // 主要情绪标签
   emotionScore           Int      @default(50)  // 0-100
-  isNegative             Boolean  @default(false)
+  isNegative             Boolean  @default(false)    // 是否负面情绪
   riskLevel              Int      @default(0)   // 0=正常, 1=关注, 2=预警, 3=危机
-  riskDescription        String?  @db.VarChar(500)
-  suggestion             String?  @db.VarChar(500)
+  riskDescription        String?  @db.VarChar(500)  // 风险描述
+  suggestion             String?  @db.VarChar(500)  // 建议内容
   improvementSuggestions String?  @db.Text      // JSON数组字符串
   createdAt              DateTime @default(now())
 
@@ -145,15 +145,15 @@ model SessionEmotion {
 // ==================== 情绪预警模块 ====================
 
 model AlertEvent {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  sessionId  Int?
+  id         Int       @id @default(autoincrement())  // 预警事件ID
+  userId     Int                          // 关联用户ID
+  sessionId  Int?                         // 关联会话ID（可选）
   riskLevel  Int       // 1=关注, 2=预警, 3=危机
-  reason     String    @db.VarChar(500)
-  handled    Boolean   @default(false)
-  handlerId  Int?
-  handleNote String?   @db.VarChar(500)
-  handledAt  DateTime?
+  reason     String    @db.VarChar(500)    // 预警原因
+  handled    Boolean   @default(false)     // 是否已处理
+  handlerId  Int?                          // 处理人ID
+  handleNote String?   @db.VarChar(500)    // 处理备注
+  handledAt  DateTime?                     // 处理时间
   createdAt  DateTime  @default(now())
 
   user    User                 @relation(fields: [userId], references: [id])
@@ -167,16 +167,16 @@ model AlertEvent {
 // ==================== 情绪日记模块 ====================
 
 model EmotionDiary {
-  id              Int      @id @default(autoincrement())
-  userId          Int
+  id              Int      @id @default(autoincrement())  // 日记ID
+  userId          Int                          // 关联用户ID
   moodScore       Int      // 1-10
-  moodLabel       String   @db.VarChar(20)
-  dominantEmotion String?  @db.VarChar(20)
-  emotionTriggers String?  @db.VarChar(200)
-  content         String?  @db.Text
-  sleepQuality    Int?     // 1-5
-  stressLevel     Int?     // 1-5
-  diaryDate       DateTime @default(now())
+  moodLabel       String   @db.VarChar(20)     // 心情标签（如"开心"）
+  dominantEmotion String?  @db.VarChar(20)     // 主导情绪
+  emotionTriggers String?  @db.VarChar(200)    // 情绪触发因素
+  content         String?  @db.Text            // 日记内容
+  sleepQuality    Int?     // 1-5 睡眠质量
+  stressLevel     Int?     // 1-5 压力水平
+  diaryDate       DateTime @default(now())     // 日记日期
   createdAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -188,11 +188,11 @@ model EmotionDiary {
 // ==================== 知识库模块 ====================
 
 model KnowledgeCategory {
-  id           Int      @id @default(autoincrement())
-  parentId     Int?     @default(0)
-  categoryName String   @db.VarChar(50)
-  sort         Int      @default(0)
-  status       Int      @default(1)
+  id           Int      @id @default(autoincrement())  // 分类ID
+  parentId     Int?     @default(0)  // 0=顶级分类
+  categoryName String   @db.VarChar(50)     // 分类名称
+  sort         Int      @default(0)         // 排序号
+  status       Int      @default(1)         // 1=启用, 0=禁用
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -200,21 +200,45 @@ model KnowledgeCategory {
 }
 
 model KnowledgeArticle {
-  id         Int      @id @default(autoincrement())
-  title      String   @db.VarChar(200)
-  content    String   @db.LongText
-  summary    String?  @db.VarChar(500)
-  coverImage String?  @db.VarChar(500)
-  categoryId Int
-  authorName String?  @db.VarChar(50)
-  tags       String?  @db.VarChar(500) // 逗号分隔
-  readCount  Int      @default(0)
+  id         Int      @id @default(autoincrement())  // 文章ID
+  title      String   @db.VarChar(200)    // 文章标题
+  content    String   @db.LongText        // 文章正文
+  summary    String?  @db.VarChar(500)    // 文章摘要
+  coverImage String?  @db.VarChar(500)    // 封面图URL
+  categoryId Int                         // 关联分类ID
+  authorName String?  @db.VarChar(50)     // 作者名称
+  tags       String?  @db.VarChar(500)    // 逗号分隔
+  readCount  Int      @default(0)         // 阅读次数
   status     Int      @default(0)      // 0=草稿, 1=已发布, 2=已下线
+  ragIndexStatus String   @default("PENDING") @db.VarChar(20) // PENDING, INDEXED, FAILED, DELETED
+  ragIndexedAt   DateTime?
+  ragIndexError  String?  @db.VarChar(500)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   category KnowledgeCategory @relation(fields: [categoryId], references: [id])
+  chunks   KnowledgeChunk[]
 
   @@index([categoryId])
+  @@index([status])
+  @@index([ragIndexStatus])
+}
+
+model KnowledgeChunk {
+  id          Int      @id @default(autoincrement())
+  articleId   Int
+  chunkIndex  Int
+  title       String   @db.VarChar(200)
+  content     String   @db.Text
+  contentHash String   @db.VarChar(64)
+  vectorId    String   @unique @db.VarChar(100)
+  status      Int      @default(1)
+  metadata    String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
   @@index([status])
 }

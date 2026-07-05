@@ -1,25 +1,29 @@
 import { reactive } from 'vue'
 
+export interface PaginationState {
+  currentPage: number
+  size: number
+  total: number
+}
+
 /**
  * 分页逻辑 Composable
  *
  * 提供分页状态和翻页方法，配合 useTableSearch 使用
  *
- * @param {Object} options - 配置项
- * @param {number} options.pageSize - 每页条数，默认 10
- * @returns {Object} - { pagination, handleChange, resetPagination }
+ * @param options.pageSize - 每页条数，默认 10
  */
-export function usePagination(options = {}) {
+export function usePagination(options: { pageSize?: number } = {}) {
   const { pageSize = 10 } = options
 
-  const pagination = reactive({
+  const pagination = reactive<PaginationState>({
     currentPage: 1,
     size: pageSize,
     total: 0
   })
 
   /** 翻页回调，更新当前页并触发搜索 */
-  const handleChange = (page, onSearch) => {
+  const handleChange = (page: number, onSearch?: () => void) => {
     pagination.currentPage = page
     onSearch?.()
   }

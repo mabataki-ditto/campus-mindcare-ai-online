@@ -11,18 +11,28 @@
       <div class="recommend-section">
         <div class="section-title">推荐阅读</div>
         <div class="recommend-list">
-          <div v-for="item in recommendList" :key="item.id" class="recommend-item" @click="goToArticle(item.id)">
+          <router-link
+            v-for="item in recommendList"
+            :key="item.id"
+            class="recommend-item"
+            :to="{ name: 'ArticleDetail', params: { id: item.id } }"
+          >
             <h4>{{ item.title }}</h4>
             <p class="read-count">
               <el-icon><Histogram /></el-icon>
               阅读量 {{ item.readCount }}
             </p>
-          </div>
+          </router-link>
         </div>
       </div>
       <!-- 右侧内容 -->
       <div class="article-list">
-        <div v-for="item in articleList" :key="item.id" class="article-item" @click="goToArticle(item.id)">
+        <router-link
+          v-for="item in articleList"
+          :key="item.id"
+          class="article-item"
+          :to="{ name: 'ArticleDetail', params: { id: item.id } }"
+        >
           <el-image style="width: 240px; height: 150px" :src="getImage(item.coverImage)"></el-image>
           <div class="info">
             <div class="title">
@@ -46,7 +56,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </router-link>
       </div>
     </div>
     <!-- 分页 -->
@@ -65,7 +75,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getKnowledgeList } from '@/service/frontend/frontend'
-import router from '@/router'
 import { formatDate } from '@/utils/formatDate'
 
 const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
@@ -104,11 +113,6 @@ const getImage = (url) => {
 const handleChange = (page) => {
   pagination.currentPage = page
   getPageList()
-}
-
-//跳转到详情
-const goToArticle = (id) => {
-  router.push(`/knowledge/article/${id}`)
 }
 
 onMounted(() => {
@@ -180,6 +184,8 @@ onMounted(() => {
           border-left: 4px solid #f59e0b;
           padding-left: 10px;
           cursor: pointer;
+          color: inherit;
+          text-decoration: none;
           .read-count {
             margin-top: 15px;
             font-size: 12px;
@@ -201,6 +207,8 @@ onMounted(() => {
         padding: 15px;
         margin-bottom: 20px;
         display: flex;
+        color: inherit;
+        text-decoration: none;
         .info {
           margin-left: 20px;
           .title {

@@ -6,29 +6,9 @@ import { analyzeEmotionWithAI } from "./emotion.service";
 
 // 情绪分析接口（含缓存逻辑）
 
-/**
- * 情绪分析路由
- *
- * 提供会话情绪分析接口，支持缓存机制：
- * - GET /session/:sessionId/emotion  获取会话情绪分析结果
- *
- * 缓存策略：
- * - 默认返回该会话最近一次的情绪分析记录（SessionEmotion）
- * - forceRefresh=true 时强制重新调用 AI 分析
- */
+
 const router = Router();
 
-/**
- * GET /session/:sessionId/emotion — 会话情绪分析
- *
- * 流程：
- * 1. 根据 sessionId 查找会话，不存在则返回默认中性情绪
- * 2. 查询已有的情绪分析记录（取最新一条）
- * 3. 有缓存且未强制刷新 → 直接返回缓存
- *    否则 → 调用 analyzeEmotionWithAI 重新分析
- *
- * improvementSuggestions 在数据库中以 JSON 字符串存储，返回时解析为数组。
- */
 router.get(
   "/session/:sessionId/emotion",
   authMiddleware,

@@ -94,6 +94,8 @@ export const toolDefinitions = [
   }
 ]
 
+export const alertToolDefinitions = toolDefinitions.filter((tool) => tool.function.name === 'triggerAlert')
+
 // ==================== 工具执行实现 ====================
 
 /**
@@ -132,8 +134,8 @@ async function triggerAlert(riskLevel, reason) {
  * 知识库检索（RAG 核心）
  *
  * 执行流程：
- * 1. 调后端 /knowledge/article/page 按关键词检索 Top 3 文章
- * 2. 提取 title + summary 作为事实依据
+ * 1. 调后端 /rag/retrieve 做向量语义检索
+ * 2. 提取 chunk 片段作为事实依据
  * 3. 返回给 AI，AI 基于这些文章生成回答（减少幻觉）
  *
  * RAG 闭环：用户提问 → AI 决定检索 → 注入文章到上下文 → AI 有据可依地回答
@@ -141,26 +143,62 @@ async function triggerAlert(riskLevel, reason) {
  * @param {string} query - 检索关键词（由 AI 从用户问题中提炼）
  * @returns {{found: boolean, articles?: Array, message?: string}}
  */
-async function searchKnowledgeBase(query) {
+export async function searchKnowledgeBase(query) {
   try {
-    const data = await hyRequest.get({
-      url: '/knowledge/article/page',
-      params: { keyword: query, size: 3 } // 只取 Top 3，避免上下文过长
+    const data = await hyRequest.post({
+      url: '/rag/retrieve',
+      data: { query, topK: 8 }
     })
 
     if (data?.records?.length > 0) {
-      // 提取标题和摘要作为 AI 回答的事实依据
-      const results = data.records.map((article) => ({
+      const articleMap = new Map()
+
+      for (const record of data.records) {
+        const current = articleMap.get(record.articleId)
+        if (current) {
+          current.contentParts.push(record.content)
+          current.snippetParts.push(record.snippet)
+          current.score = Math.max(current.score, record.score)
+          continue
+        }
+
+        articleMap.set(record.articleId, {
+          articleId: record.articleId,
+          chunkId: record.chunkId,
+          title: record.title,
+          contentParts: [record.content],
+          snippetParts: [record.snippet],
+          score: record.score
+        })
+
+        if (articleMap.size >= 5) break
+      }
+
+      const groupedArticles = Array.from(articleMap.values())
+
+      const references = groupedArticles.map((article, index) => ({
+        index: index + 1,
+        articleId: article.articleId,
+        chunkId: article.chunkId,
         title: article.title,
-        summary: article.summary || article.content?.substring(0, 200)
+        snippet: Array.from(new Set(article.snippetParts)).join(' ... '),
+        score: article.score
       }))
-      return { found: true, articles: results }
+
+      const articles = groupedArticles.map((article, index) => ({
+        referenceIndex: index + 1,
+        title: article.title,
+        content: Array.from(new Set(article.contentParts)).join('\n\n'),
+        score: article.score
+      }))
+
+      return { found: true, articles, references }
     }
 
     // 未检索到也明确告知，AI 会诚实回复"知识库暂无相关内容"
-    return { found: false, message: '未找到相关知识库文章' }
+    return { found: false, references: [], message: '知识库中没有找到充分依据，请不要编造引用' }
   } catch (e) {
-    return { found: false, message: '知识库检索失败' }
+    return { found: false, references: [], message: '知识库检索失败，请不要声称已经查询知识库' }
   }
 }
 

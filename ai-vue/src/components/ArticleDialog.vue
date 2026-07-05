@@ -1,5 +1,12 @@
 <template>
-  <el-dialog :title="isEdit ? '编辑文章' : '新增文章'" v-model="dialogVisible" width="50%" @close="handleClose">
+  <el-dialog
+    :title="isEdit ? '编辑文章' : '新增文章'"
+    v-model="dialogVisible"
+    width="50%"
+    class="article-dialog"
+    append-to-body
+    @close="handleClose"
+  >
     <!-- 表单 -->
     <el-form :model="formData" :rules="rules" ref="formRef" label-width="120px">
       <el-form-item label="文章标题" prop="title">
@@ -126,11 +133,18 @@ watch(
   (newVal) => {
     if (newVal) {
       nextTick(() => {
-        Object.assign(formData, newVal)
+        Object.assign(formData, {
+          ...newVal,
+          tagArray: Array.isArray(newVal.tagArray)
+            ? newVal.tagArray
+            : newVal.tags
+              ? newVal.tags.split(',').filter(Boolean)
+              : []
+        })
         //使用现有ID
         businessId.value = newVal.id
         //封面Url
-        imgUrl.value = fileBaseUrl + newVal.coverImage
+        imgUrl.value = newVal.coverImage ? fileBaseUrl + newVal.coverImage : ''
       })
     }
   }
@@ -138,11 +152,14 @@ watch(
 
 const handleClose = () => {
   //重置表单
-  formRef.value.resetFields()
+  formRef.value?.resetFields()
   //重置ID
   businessId.value = null
   //重置标签
   formData.tagArray = []
+  //重置预览和提交状态
+  btnPreview.value = false
+  loading.value = false
   //重置封面图片和数据
   handleRemove()
   emit('update:modelValue', false)
@@ -156,6 +173,7 @@ const formData = reactive({
   categoryId: 1,
   summary: '',
   tags: '',
+  tagArray: [],
   id: ''
 })
 
@@ -209,9 +227,8 @@ const handleUploadRequest = async ({ file }) => {
   //UUID 生成
   businessId.value = crypto.randomUUID()
   const fileRes = await uploadFile(file, {
-    businessType: 'ARTICLE',
-    businessId: businessId.value
-  })
+        businessId: businessId.value
+      })
 
   //拼接完整的图片地址
   imgUrl.value = fileBaseUrl + fileRes.filePath
@@ -256,7 +273,7 @@ const handleSubmit = () => {
 
     const submitData = {
       ...formData,
-      tags: formData.tagArray.join(',')
+      tags: (formData.tagArray || []).join(',')
     }
     delete submitData.tagArray
 
@@ -299,5 +316,18 @@ const handleSubmit = () => {
   width: 200px;
   height: 120px;
   display: block;
+}
+
+:deep(.article-dialog .el-dialog__header),
+:deep(.article-dialog .el-dialog__footer) {
+  position: relative;
+  z-index: 3;
+}
+
+:deep(.article-dialog .el-dialog__body) {
+  position: relative;
+  z-index: 1;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>

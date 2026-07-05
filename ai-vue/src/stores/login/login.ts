@@ -3,7 +3,6 @@ import type { IUserInfo, IUserMenu } from '@/types'
 import { localCache } from '@/utils/cache'
 import { LOGIN_TOKEN, USER_INFO, USER_MENUS, USER_PERMISSIONS } from '@/global/constants'
 import router from '@/router'
-import { mapMenusToPermissions } from '@/utils/map-menus'
 import { getStaticMenus } from '@/config/menus'
 
 interface ILoginState {
@@ -33,9 +32,6 @@ const useLoginStore = defineStore('login', {
       this.userMenus = userMenus
       localCache.setCache(USER_MENUS, userMenus)
 
-      const permissions = mapMenusToPermissions(userMenus)
-      this.permissions = permissions
-      localCache.setCache(USER_PERMISSIONS, permissions)
     },
     loginAction(token: string, userInfo: IUserInfo) {
       this.setToken(token)
@@ -62,9 +58,6 @@ const useLoginStore = defineStore('login', {
 
         if (userMenus && userMenus.length > 0) {
           this.userMenus = userMenus
-          const permissions = mapMenusToPermissions(userMenus)
-          this.permissions = permissions
-          localCache.setCache(USER_PERMISSIONS, permissions)
         } else {
           const staticMenus = getStaticMenus()
           this.setUserMenus(staticMenus)

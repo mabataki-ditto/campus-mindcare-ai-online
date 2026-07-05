@@ -1,5 +1,6 @@
 <template>
   <div class="articleDetail-container">
+    <!-- 顶部横幅：图标 + 页面标题 -->
     <div class="header-section">
       <div class="header-content">
         <el-image :src="iconUrl" style="width: 60px; height: 60px" />
@@ -7,6 +8,7 @@
       </div>
     </div>
     <div class="content">
+      <!-- 文章信息卡片：分类、标题、摘要、作者、阅读量 -->
       <div class="diary-card">
         <p class="title">文章信息</p>
         <div class="sub-title">
@@ -17,6 +19,7 @@
           </div>
         </div>
         <h1 class="article-title">{{ articleDetail.title }}</h1>
+        <!-- 摘要：绿色左边框高亮显示 -->
         <div class="summary-content" v-if="articleDetail.summary">
           <p>{{ articleDetail.summary }}</p>
         </div>
@@ -31,9 +34,11 @@
           </div>
         </div>
       </div>
+      <!-- 正文内容卡片：v-html 渲染后端返回的富文本 HTML -->
       <div class="diary-card">
         <div class="title">正文内容</div>
         <div :style="{ marginTop: '20px' }" class="content-wrapper" v-html="articleDetail.content || ''"></div>
+        <!-- 标签列表：后端返回逗号分隔的 tags，已由接口转为 tagArray -->
         <div class="tags-content" v-if="articleDetail.tagArray && articleDetail.tagArray.length">
           <h4 class="tags-title">相关标签</h4>
           <div class="tags-list">
@@ -52,12 +57,14 @@ import { getKnowledgeDetail } from '@/service/frontend/frontend'
 import { onMounted, ref, watch } from 'vue'
 import { dayjs } from 'element-plus'
 
+// 路由参数 /knowledge/article/:id，通过 props 接收
 const props = defineProps({
   id: String
 })
 
 const articleDetail = ref({})
 
+// 加载文章详情：调用后端接口，返回数据包含 title/content/summary/tagArray 等
 const loadDetail = () => {
   getKnowledgeDetail(props.id).then((res) => {
     articleDetail.value = res
@@ -66,8 +73,10 @@ const loadDetail = () => {
 
 onMounted(loadDetail)
 
+// 监听路由参数变化（如从文章列表点击另一篇文章时），重新加载详情
 watch(() => props.id, loadDetail)
 
+// 页面顶部图标（Vite 静态资源引入方式，确保构建后路径正确）
 const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
 </script>
 

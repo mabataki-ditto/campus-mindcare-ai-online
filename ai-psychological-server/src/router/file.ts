@@ -47,45 +47,7 @@ const upload = multer({
   }
 })
 
-/**
- * @swagger
- * /file/upload:
- *   post:
- *     tags: [文件上传]
- *     summary: 上传文件
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required: [file]
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *               businessType:
- *                 type: string
- *                 example: ARTICLE
- *               businessId:
- *                 type: string
- *               businessField:
- *                 type: string
- *                 example: cover
- *     responses:
- *       200:
- *         description: 上传成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code: { type: number, example: 200 }
- *                 data:
- *                   type: object
- *                   properties:
- *                     filePath: { type: string }
- */
+
 router.post('/upload', authMiddleware, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {

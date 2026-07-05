@@ -37,6 +37,21 @@
           <MarkdownRenderer v-else-if="msg.senderType === 2" :content="msg.content" :is-ai-message="true" />
           <p v-else-if="msg.content" class="user-text">{{ msg.content }}</p>
         </div>
+        <div v-if="msg.senderType === 2 && msg.references?.length" class="message-references">
+          <div class="references-title">参考来源</div>
+          <router-link
+            v-for="reference in msg.references"
+            :key="`${reference.articleId}-${reference.chunkId}`"
+            class="reference-item"
+            :to="`/knowledge/article/${reference.articleId}`"
+          >
+            <span class="reference-index">[{{ reference.index }}]</span>
+            <span class="reference-body">
+              <span class="reference-title">{{ reference.title }}</span>
+              <span class="reference-snippet">{{ reference.snippet }}</span>
+            </span>
+          </router-link>
+        </div>
         <div class="message-time">{{ msg.senderType === 2 && isAiTyping ? '正在输入中...' : formatRelativeTime(msg.createdAt) }}</div>
       </div>
     </div>
@@ -205,6 +220,61 @@ watch(
         font-size: 12px;
         color: #999;
         margin-top: 4px;
+      }
+
+      .message-references {
+        margin-top: 8px;
+        display: grid;
+        gap: 6px;
+
+        .references-title {
+          font-size: 12px;
+          color: #8a5a24;
+          font-weight: 600;
+        }
+
+        .reference-item {
+          display: flex;
+          gap: 6px;
+          padding: 8px 10px;
+          border: 1px solid rgba(251, 146, 60, 0.18);
+          border-radius: 8px;
+          background: rgba(255, 247, 237, 0.72);
+          color: #92400e;
+          text-decoration: none;
+          line-height: 1.45;
+
+          &:hover {
+            border-color: rgba(251, 146, 60, 0.38);
+            background: rgba(255, 237, 213, 0.9);
+          }
+        }
+
+        .reference-index {
+          flex: 0 0 auto;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .reference-body {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+        }
+
+        .reference-title {
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .reference-snippet {
+          font-size: 12px;
+          color: #9a6b35;
+          display: -webkit-box;
+          overflow: hidden;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        }
       }
     }
   }

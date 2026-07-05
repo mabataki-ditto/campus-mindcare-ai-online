@@ -5,31 +5,7 @@ import { authMiddleware, adminMiddleware } from '../middleware/auth'
 
 const router = Router()
 
-/**
- * @swagger
- * /emotion-diary:
- *   post:
- *     tags: [情绪日记]
- *     summary: 添加情绪日记
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [moodScore]
- *             properties:
- *               moodScore: { type: number, minimum: 1, maximum: 10 }
- *               dominantEmotion: { type: string, example: 愉悦 }
- *               emotionTriggers: { type: string }
- *               diaryContent: { type: string }
- *               sleepQuality: { type: number }
- *               stressLevel: { type: number }
- *               diaryDate: { type: string, format: date }
- *     responses:
- *       200:
- *         description: 记录成功
- */
+
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId
@@ -60,6 +36,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 })
 
 // GET /api/emotion-diary/admin/page — 日记管理列表
+
 router.get('/admin/page', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
     const page = Number(req.query.currentPage || 1)
@@ -98,6 +75,7 @@ router.get('/admin/page', authMiddleware, adminMiddleware, async (req: Request, 
 })
 
 // DELETE /api/emotion-diary/admin/:id — 删除日记
+
 router.delete('/admin/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params

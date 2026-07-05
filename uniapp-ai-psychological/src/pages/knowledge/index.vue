@@ -28,7 +28,7 @@
         v-for="a in articles"
         :key="a.id"
         class="article-card"
-        @tap="goDetail(a.id)"
+        @click="goDetail(a.id)"
       >
         <image
           v-if="a.coverImage"
@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
-import { getArticlePage, getCategoryTree } from "@/api/knowledge";
+import { getArticlePage, getCategoryList } from "@/api/knowledge";
 import { BASE_URL } from "@/config";
 const keyword = ref(""),
   categories = ref<any[]>([]),
@@ -69,7 +69,7 @@ onShow(() => {
 });
 const loadCategories = async () => {
   try {
-    categories.value = ((await getCategoryTree()) as any) || [];
+    categories.value = ((await getCategoryList()) as any) || [];
   } catch (e) {
     console.error(e);
   }
@@ -108,8 +108,15 @@ const loadMore = () => {
     loadArticles(false);
   }
 };
-const goDetail = (id: number) =>
-  uni.navigateTo({ url: `/pages/knowledge/detail?id=${id}` });
+const goDetail = (id: number) => {
+  uni.navigateTo({
+    url: `/pages/knowledge/detail?id=${id}`,
+    fail: (err) => {
+      console.error("跳转文章详情失败:", err);
+      uni.showToast({ title: "跳转失败", icon: "none" });
+    },
+  });
+};
 const getImageUrl = (url: string) => {
   if (!url) return "";
   if (url.startsWith("http")) return url;

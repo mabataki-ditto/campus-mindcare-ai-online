@@ -96,7 +96,7 @@
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { addEmotionDiary } from '@/service/frontend/frontend'
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
 
 const iconUrl = new URL('@/assets/images/like.png', import.meta.url).href
 

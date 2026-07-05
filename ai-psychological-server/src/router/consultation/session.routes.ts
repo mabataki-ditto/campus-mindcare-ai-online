@@ -4,28 +4,8 @@ import { success, fail } from "../../utils/response";
 import { authMiddleware } from "../../middleware/auth";
 import { v4 as uuidv4 } from "uuid";
 
-/**
- * 会话管理路由
- *
- * 提供心理咨询会话的 CRUD 及消息增查：
- * - POST   /session/start                    创建会话（可选携带初始消息）
- * - GET    /sessions                          会话列表（管理员可查所有，普通用户只能查自己的）
- * - DELETE /sessions/:sessionId               删除会话（级联删除消息/情绪/预警）
- * - GET    /sessions/:sessionId/messages      获取会话历史消息
- * - POST   /sessions/:sessionId/messages      保存单条消息（用户或 AI 消息）
- *
- * sessionId 参数兼容两种格式：
- * - 字符串格式：session_{timestamp}_{uuid8位}（业务层生成）
- * - 数字格式：数据库自增 id（兼容旧版前端）
- */
 const router = Router();
 
-/**
- * POST /session/start — 创建会话
- *
- * 生成格式为 `session_{timestamp}_{uuid8位}` 的 sessionId，状态置为 ACTIVE。
- * 若传入 initialMessage，则同时插入一条用户消息（senderType=1）。
- */
 router.post(
   "/session/start",
   authMiddleware,
@@ -72,15 +52,7 @@ router.post(
   },
 );
 
-/**
- * GET /sessions — 会话列表
- *
- * 权限规则：
- * - 普通用户（userType !== 2）：只能查自己的会话
- * - 管理员（userType === 2）：可查所有，支持按 userId 筛选
- *
- * 返回字段包含会话预览（最后一条消息截断 50 字）、消息数、风险等级（取该会话所有预警的最大值）。
- */
+
 router.get("/sessions", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -146,12 +118,7 @@ router.get("/sessions", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * DELETE /sessions/:sessionId — 删除会话
- *
- * 级联删除关联数据（消息/情绪分析/预警），使用事务保证原子性。
- * 权限：普通用户只能删除自己的会话，管理员可删除任意会话。
- */
+
 router.delete(
   "/sessions/:sessionId",
   authMiddleware,
@@ -194,12 +161,7 @@ router.delete(
   },
 );
 
-/**
- * GET /sessions/:sessionId/messages — 获取会话历史消息
- *
- * 按时间升序返回该会话的所有消息（用户和 AI 消息混合）。
- * 会话不存在时返回空数组（而非报错），便于前端首次进入新会话时直接渲染。
- */
+
 router.get(
   "/sessions/:sessionId/messages",
   authMiddleware,
@@ -234,12 +196,7 @@ router.get(
   },
 );
 
-/**
- * POST /sessions/:sessionId/messages — 保存单条消息
- *
- * 由前端在 AI 回复完成后主动调用，分别保存用户消息和 AI 消息。
- * senderType：1=用户，2=AI
- */
+
 router.post(
   "/sessions/:sessionId/messages",
   authMiddleware,

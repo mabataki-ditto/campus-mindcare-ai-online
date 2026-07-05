@@ -1,0 +1,13 @@
+{
+  "topK": 5,
+  "cases": [
+    {
+      "question": "失眠了怎么办",
+      "expectedArticleIds": [4]
+    },
+    {
+      "question": "和舍友关系不好怎么办",
+      "expectedArticleIds": [5]
+    }
+  ]
+}

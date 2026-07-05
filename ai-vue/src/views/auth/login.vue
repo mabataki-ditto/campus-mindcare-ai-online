@@ -60,7 +60,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
         .then((data: any) => {
           const token = data?.token || ''
           const userInfo = data?.userInfo || {}
-          
+
           if (token) {
             ElMessage.success('登录成功')
             loginStore.loginAction(token, userInfo)

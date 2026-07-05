@@ -6,11 +6,6 @@
           <Expand />
         </el-icon>
       </el-button>
-      <!-- <el-breadcrumb separator="/">
-        <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.url" :to="{ path: item.url }">
-          {{ item.name }}
-        </el-breadcrumb-item>
-      </el-breadcrumb> -->
     </div>
     <div class="flex-box">
       <el-dropdown @command="handleCommand" class="user-dropdown">
@@ -33,21 +28,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import useMainStore from '@/stores/main/main'
 import useLoginStore from '@/stores/login/login'
-import { mapPathToBreadcrumbs } from '@/utils/map-menus'
-
-const route = useRoute()
 
 const mainStore = useMainStore()
 const loginStore = useLoginStore()
 
 const avatarUrl = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 const userInfo = computed(() => loginStore.userInfo || { username: '' })
-const userMenus = computed(() => loginStore.userMenus || [])
-const breadcrumbs = computed(() => mapPathToBreadcrumbs(route.path, userMenus.value))
 
 function handleCommand(command: string) {
   if (command === 'logout') {

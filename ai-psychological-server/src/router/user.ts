@@ -8,45 +8,7 @@ import { config } from "../config"; // 配置文件，包含 jwtSecret 和过期
 
 const router = Router();
 
-/**
- * @swagger
- * /user/login:
- *   post:
- *     tags: [用户认证]
- *     summary: 用户登录
- *     description: 验证用户名密码，返回 JWT token 及用户信息
- *     security: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [username, password]
- *             properties:
- *               username:
- *                 type: string
- *                 example: admin
- *               password:
- *                 type: string
- *                 example: "123456"
- *     responses:
- *       200:
- *         description: 登录成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code: { type: number, example: 200 }
- *                 data:
- *                   type: object
- *                   properties:
- *                     token: { type: string }
- *                     userInfo: { $ref: '#/components/schemas/User' }
- *                     menus: { type: array, items: { type: object } }
- *                 message: { type: string, example: 登录成功 }
- */
+
 router.post("/login", async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
@@ -211,17 +173,7 @@ router.post("/add", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * @swagger
- * /user/logout:
- *   post:
- *     tags: [用户认证]
- *     summary: 用户登出
- *     description: 登出当前用户（前端需清除 token）
- *     responses:
- *       200:
- *         description: 登出成功
- */
+
 router.post("/logout", authMiddleware, async (req: Request, res: Response) => {
   return res.json(success(null, "登出成功"));
 });

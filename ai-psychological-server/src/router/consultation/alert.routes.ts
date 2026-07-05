@@ -4,26 +4,9 @@ import { success, fail } from "../../utils/response";
 import { authMiddleware, adminMiddleware } from "../../middleware/auth";
 
 // 创建/列表/处理预警
-/**
- * 预警管理路由
- *
- * 提供心理危机预警的创建、查询和处理：
- * - POST /alert                创建预警记录（前端 triggerAlert 工具调用）
- * - GET  /alerts               预警列表（仅管理员）
- * - PUT  /alerts/:id/handle    处理预警（仅管理员）
- *
- * 风险等级定义：1=关注，2=预警，3=危机
- * 当 riskLevel >= 2 时，会同步更新 User.riskLevel（只升不降）
- */
+
 const router = Router();
 
-/**
- * POST /alert — 创建预警记录
- *
- * 由前端 triggerAlert 工具在 AI 检测到用户表达自伤/自杀/极端负面情绪时调用。
- * sessionId 可选（可能在没有会话上下文时触发）。
- * riskLevel >= 2 时同步更新用户风险等级（仅当新等级高于当前等级）。
- */
 router.post("/alert", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
@@ -68,12 +51,7 @@ router.post("/alert", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /alerts — 预警记录列表（管理端）
- *
- * 仅管理员可访问（adminMiddleware 校验 userType === 2）。
- * 支持按 riskLevel 和 handled 状态筛选，返回关联的用户昵称信息。
- */
+
 router.get(
   "/alerts",
   authMiddleware,
@@ -132,11 +110,7 @@ router.get(
   },
 );
 
-/**
- * PUT /alerts/:id/handle — 处理预警
- *
- * 仅管理员可访问。标记预警为已处理，记录处理人、处理备注和处理时间。
- */
+
 router.put(
   "/alerts/:id/handle",
   authMiddleware,

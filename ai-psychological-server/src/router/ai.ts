@@ -5,32 +5,21 @@ import { config } from "../config";
 
 const router = Router();
 
-/** AI 对话请求体（前端 → 后端） */
 interface AiChatRequest {
-  /** 消息上下文，支持纯文本和多模态（图片） */
   messages: Array<{
     role: string;
     content:
       | string
       | Array<{ type: string; text?: string; image_url?: { url: string } }>;
   }>;
-  /** 工具定义（Function Calling） */
   tools?: Array<{
     type: string;
     function: { name: string; description: string; parameters: any };
   }>;
-  /** 工具选择策略：'auto' | 'none' | 指定工具 */
   toolChoice?: string;
-  /** 是否流式返回，默认 true */
   stream?: boolean;
 }
 
-/**
- * POST /api/ai/chat — AI 对话代理（转发 DeepSeek）
- *
- * 职责：JWT 鉴权 → 组装请求体 → 调用 DeepSeek → SSE 字节级透传回前端
- * 注意：本接口不解析 SSE 内容，也不感知 tool_calls，纯透传
- */
 router.post("/chat", authMiddleware, async (req: Request, res: Response) => {
   try {
     const { messages, tools, toolChoice, stream }: AiChatRequest = req.body;

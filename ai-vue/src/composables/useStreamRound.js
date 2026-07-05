@@ -5,7 +5,7 @@
  * 返回本轮的文本内容、结束原因和工具调用信息
  */
 
-import { toolDefinitions } from './useToolCalls'
+import { alertToolDefinitions } from './useToolCalls'
 import { parseSSEStream } from './useSSEStream'
 import { localCache } from '@/utils/cache'
 import { LOGIN_TOKEN } from '@/global/constants'
@@ -28,7 +28,7 @@ export async function streamRound({ allMessages, aiMessage, signal }) {
     },
     body: JSON.stringify({
       messages: allMessages,
-      tools: toolDefinitions,
+      tools: alertToolDefinitions,
       toolChoice: 'auto',
       stream: true
     }),
@@ -69,6 +69,12 @@ export async function streamRound({ allMessages, aiMessage, signal }) {
     }
 
     // 工具调用 — 增量拼接
+    // SSE 流中 tool_calls 是分段传来的：第一个 chunk 带 id 和 name，后续 chunk 只带 arguments 片段
+    // 用 index 作为 key 把同一个工具调用的片段拼到一起
+    // 例：chunk1 → { index:0, id:"call_abc", function:{name:"triggerAlert"} }
+    //     chunk2 → { index:0, function:{arguments:'{"ri'} }
+    //     chunk3 → { index:0, function:{arguments:'skLevel":3}'} }
+    //     拼接结果 → { id:"call_abc", name:"triggerAlert", arguments:'{"riskLevel":3}' }
     if (delta?.tool_calls) {
       for (const tc of delta.tool_calls) {
         const idx = tc.index
@@ -77,6 +83,7 @@ export async function streamRound({ allMessages, aiMessage, signal }) {
         }
         if (tc.id) toolCallsMap[idx].id = tc.id
         if (tc.function?.name) toolCallsMap[idx].name = tc.function.name
+        // arguments 用 += 追加，因为跨 chunk 分片传输
         if (tc.function?.arguments) toolCallsMap[idx].arguments += tc.function.arguments
       }
     }

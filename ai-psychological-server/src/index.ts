@@ -12,6 +12,7 @@ import { knowledgeRouter } from './router/knowledge'
 import { fileRouter } from './router/file'
 import { analyticsRouter } from './router/analytics'
 import { aiRouter } from './router/ai'
+import { ragRouter } from './router/rag'
 
 const app = express()
 
@@ -48,8 +49,10 @@ app.use('/api/knowledge', knowledgeRouter)
 app.use('/api/file', fileRouter)
 app.use('/api/data-analytics', analyticsRouter)
 app.use('/api/ai', aiRouter)
+app.use('/api/rag', ragRouter)
 
 // 健康检查
+
 app.get('/api/health', (req, res) => {
   res.json({ code: 200, msg: '服务运行正常', data: { timestamp: new Date().toISOString() } })
 })

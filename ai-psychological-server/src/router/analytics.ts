@@ -1,8 +1,3 @@
-/**
- * 数据看板分析路由模块。
- * 提供首页看板所需的总览数据：用户/日记/咨询/预警的统计卡片、
- * 情绪与咨询趋势图、30 天用户活跃度、预警等级分布等。
- */
 import { Router, Request, Response } from 'express'
 import prisma from '../utils/prisma'
 import { success, fail } from '../utils/response'
@@ -10,34 +5,34 @@ import { authMiddleware, adminMiddleware } from '../middleware/auth'
 
 const router = Router()
 
-// 看板总览接口：一次性返回首页图表和统计卡片需要的全部数据。
-router.get('/overview', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+// GET /api/data-analytics/overview — 数据看板概览（仅管理员）
+// 聚合统计：系统总览 + 情绪趋势 + 咨询趋势 + 用户活跃度 + 预警统计
+router.get('/overview', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
   try {
-    // 统计口径统一到当天 00:00:00，避免跨天边界把今天的数据算偏。
+    // 时间范围：今日零点（用于"今日新增"）+ 近 30 天（用于趋势图）
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // 最近 30 天的起始日期，用于趋势图和活跃用户统计。
     const thirtyDaysAgo = new Date(today)
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29)
 
-    // 将所有看板查询并发执行，接口总耗时接近最慢的单个查询。
+    // 并行查询所有统计数据，避免串行等待
     const [
-      totalUsers,
-      totalDiaries,
-      todayNewDiaries,
-      totalSessions,
-      todayNewSessions,
-      totalAlerts,
-      unhandledAlerts,
-      recentDiaries,
-      recentSessions,
-      recentAlerts,
-      dailyNewUsers,
-      dailyDiaryUsers,
-      dailyConsultationUsers,
-      activeUsers,
-      alertByLevel
+      totalUsers, // 总用户数（status=1）
+      totalDiaries, // 总日记数
+      todayNewDiaries, // 今日新增日记
+      totalSessions, // 总咨询会话数
+      todayNewSessions, // 今日新增会话
+      totalAlerts, // 总预警数
+      unhandledAlerts, // 未处理预警数
+      recentDiaries, // 近 30 天日记（用于情绪趋势聚合）
+      recentSessions, // 近 30 天会话（用于咨询趋势聚合）
+      recentAlerts, // 最近 5 条未处理预警（Top 5）
+      dailyNewUsers, // 每日新增用户 Map
+      dailyDiaryUsers, // 每日写日记的去重用户 Map
+      dailyConsultationUsers, // 每日咨询的去重用户 Map
+      activeUsers, // 近 30 天活跃用户数
+      alertByLevel // 按风险等级分组的预警数
     ] = await Promise.all([
       prisma.user.count({ where: { status: 1 } }),
       prisma.emotionDiary.count(),
@@ -46,66 +41,56 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req: Request, re
       prisma.consultationSession.count({ where: { createdAt: { gte: today } } }),
       prisma.alertEvent.count(),
       prisma.alertEvent.count({ where: { handled: false } }),
-      // 情绪趋势：取最近 30 天的日记记录，后面按日期聚合成折线图数据。
       prisma.emotionDiary.findMany({
         where: { createdAt: { gte: thirtyDaysAgo } },
         select: { moodScore: true, createdAt: true }
       }),
-      // 咨询趋势：取最近 30 天的会话记录，后面按日期聚合成柱状图数据。
       prisma.consultationSession.findMany({
         where: { createdAt: { gte: thirtyDaysAgo } },
         select: { createdAt: true, userId: true }
       }),
-      // 最近未处理预警：给看板和待办卡片使用。
       prisma.alertEvent.findMany({
         where: { handled: false },
         orderBy: { createdAt: 'desc' },
         take: 5,
         include: { user: { select: { nickname: true } } }
       }),
-      // 每日新增用户数。
       getDailyNewUsers(thirtyDaysAgo),
-      // 每日日记活跃用户数，按用户去重。
       getDailyUniqueUsers('emotionDiary', 'userId', thirtyDaysAgo),
-      // 每日咨询活跃用户数，按用户去重。
       getDailyUniqueUsers('consultationSession', 'userId', thirtyDaysAgo),
-      // 最近 30 天有任意行为的活跃用户数。
+      // 活跃用户：近 30 天写过日记 OR 发起过咨询的用户数
       prisma.user.count({
         where: {
-          OR:  [
+          OR: [
             { diaries: { some: { createdAt: { gte: thirtyDaysAgo } } } },
             { sessions: { some: { createdAt: { gte: thirtyDaysAgo } } } }
           ]
         }
       }),
-      // 按风险等级统计预警数量。
       prisma.alertEvent.groupBy({
         by: ['riskLevel'],
         _count: true
       })
     ])
 
-    // 将原始记录按日期聚合成图表可直接渲染的数据。
+    // 二次聚合：将原始记录转为按日趋势数据
     const emotionTrend = aggregateByDate(recentDiaries, 'moodScore')
+    const consultationDailyTrend = buildConsultationTrend(recentSessions)
 
-    // 咨询趋势不计算平均值，只需要按天的数量统计。
-    const consultationDailyTrend = aggregateByDate(recentSessions)
-
-    // 将 groupBy 的数组结果转成前端更好用的对象结构。
+    // 将 groupBy 结果转为 { '1': 数量, '2': 数量, '3': 数量 } 的 Map
     const alertByLevelMap: Record<string, number> = {}
     for (const item of alertByLevel) {
       alertByLevelMap[String(item.riskLevel)] = item._count
     }
 
-    // 补齐最近 30 天的日期序列，缺失日期补 0，方便前端直接画连续折线。
+    // 合并三个每日 Map → 完整的 30 天用户活跃度数组（补齐空日期）
     const userActivity = buildFullDateActivity(dailyNewUsers, dailyDiaryUsers, dailyConsultationUsers, thirtyDaysAgo)
 
-    // 按前端看板模块组织返回结构，避免页面再做二次拼装。
     return res.json(
       success(
         {
-          // 系统总览：顶部统计卡片数据。
           systemOverview: {
+            // 顶部统计卡片
             totalUsers,
             activeUsers,
             totalDiaries,
@@ -115,19 +100,17 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req: Request, re
             totalAlerts,
             unhandledAlerts
           },
-          // 情绪趋势：30 天日均情绪分折线图。
-          emotionTrend,
-          // 咨询统计：会话总数、日均趋势（平均时长暂未统计）。
+          emotionTrend, // 情绪折线图：每日平均情绪分数
           consultationStats: {
+            // 咨询统计
             totalSessions,
             dailyTrend: consultationDailyTrend
           },
-          // 用户活跃度：30 天每日新增/日记/咨询用户数。
-          userActivity,
-          // 预警统计：等级分布 + 最近 5 条未处理预警。
+          userActivity, // 用户活跃度图：每日活跃/新增/日记/咨询用户数
           alertStats: {
+            // 预警统计
             totalAlerts,
-            byLevel: alertByLevelMap,
+            byLevel: alertByLevelMap, // 按风险等级分布
             recentAlerts: recentAlerts.map((a) => ({
               id: a.id,
               user: { nickname: a.user.nickname },
@@ -146,8 +129,10 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req: Request, re
 })
 
 /**
- * 统计每日新增用户数。
- * 只取创建时间，避免拉取不必要字段。
+ * 查询每日新增用户数
+ * 遍历用户记录，按 createdAt 的日期分组计数
+ *
+ * @returns Map<日期字符串, 该日新增用户数>
  */
 async function getDailyNewUsers(since: Date): Promise<Map<string, number>> {
   const map = new Map<string, number>()
@@ -155,17 +140,22 @@ async function getDailyNewUsers(since: Date): Promise<Map<string, number>> {
     where: { createdAt: { gte: since }, status: 1 },
     select: { createdAt: true }
   })
-  // 按天分组累加：把 createdAt 截断成日期字符串作为 key。
+
   for (const r of records) {
     const date = new Date(r.createdAt).toISOString().split('T')[0]
     map.set(date, (map.get(date) || 0) + 1)
   }
+
   return map
 }
 
 /**
- * 统计每日独立活跃用户数。
- * modelName 用来切换日记 / 咨询两种来源，field 指定去重字段。
+ * 查询每日去重用户数（按指定模型和字段）
+ * 用 Set 去重同一用户在同一天的多条记录（如用户当天写 3 条日记只算 1 个活跃用户）
+ *
+ * @param modelName Prisma 模型名：emotionDiary 或 consultationSession
+ * @param field 去重字段（userId）
+ * @returns Map<日期字符串, 该日去重用户 Set>
  */
 async function getDailyUniqueUsers(
   modelName: 'emotionDiary' | 'consultationSession',
@@ -174,7 +164,7 @@ async function getDailyUniqueUsers(
 ): Promise<Map<string, Set<string>>> {
   const map = new Map<string, Set<string>>()
   let records: Array<{ createdAt: Date; [key: string]: any }>
-  // 根据数据来源选择对应的 Prisma 模型查询。
+
   if (modelName === 'emotionDiary') {
     records = (await prisma.emotionDiary.findMany({
       where: { createdAt: { gte: since } },
@@ -186,26 +176,29 @@ async function getDailyUniqueUsers(
       select: { [field]: true, createdAt: true }
     })) as any
   }
-  // 按天分组，用 Set 对用户去重。
+
   for (const r of records) {
     const date = new Date(r.createdAt).toISOString().split('T')[0]
     if (!map.has(date)) map.set(date, new Set())
     map.get(date)!.add(String(r[field]))
   }
+
   return map
 }
 
 interface DateActivityItem {
-  date: string // 日期，格式 YYYY-MM-DD
-  activeUsers: number // 当日活跃用户估算值（日记/咨询用户数取最大）
-  newUsers: number // 当日新增用户数
-  diaryUsers: number // 当日写日记的去重用户数
-  consultationUsers: number // 当日咨询的去重用户数
+  date: string
+  activeUsers: number
+  newUsers: number
+  diaryUsers: number
+  consultationUsers: number
 }
 
 /**
- * 构建完整的 30 天日期序列。
- * 活跃度按“日记用户数”和“咨询用户数”取最大值，作为当天活跃用户估算。
+ * 构建 30 天用户活跃度数据
+ * 补全无数据的日期，确保折线图 X 轴连续不缺天
+ *
+ * 活跃用户 = 当天写日记和咨询用户数的较大值（粗略估算）
  */
 function buildFullDateActivity(
   newMap: Map<string, number>,
@@ -214,13 +207,12 @@ function buildFullDateActivity(
   startDate: Date
 ): DateActivityItem[] {
   const result: DateActivityItem[] = []
-  // 从起始日期向后遍历 30 天，保证日期序列连续，缺失数据补 0。
+
   for (let i = 0; i < 30; i++) {
     const d = new Date(startDate)
     d.setDate(d.getDate() + i)
     const dateStr = d.toISOString().split('T')[0]
 
-    // 取 Set 的 size 即为当天去重后的用户数。
     const diaryCount = diaryMap.has(dateStr) ? diaryMap.get(dateStr)!.size : 0
     const consultCount = consultMap.has(dateStr) ? consultMap.get(dateStr)!.size : 0
 
@@ -232,22 +224,59 @@ function buildFullDateActivity(
       consultationUsers: consultCount
     })
   }
+
   return result
 }
 
-// 聚合后的图表通用结构。
-interface AggregateItem {
-  date: string // 日期，格式 YYYY-MM-DD
-  avgMoodScore: number // 当日平均情绪分（保留一位小数），无值字段时为 0
-  recordCount: number // 当日记录数（日记场景使用）
-  sessionCount: number // 当日会话数（咨询场景使用）
-  userCount: number // 当日用户数
+interface ConsultationTrendItem {
+  date: string
+  sessionCount: number
+  userCount: number
 }
 
-// 将按天明细压缩成图表可直接消费的聚合数据。
+/**
+ * 构建咨询趋势：按日聚会话数 + 去重用户数
+ * 同一用户当天多次咨询：sessionCount 计多次，userCount 只计一次
+ */
+function buildConsultationTrend(data: Array<{ createdAt: Date; userId: number }>): ConsultationTrendItem[] {
+  const map = new Map<string, { sessionCount: number; userIds: Set<string> }>()
+
+  for (const item of data) {
+    const date = new Date(item.createdAt).toISOString().split('T')[0]
+    const existing = map.get(date) || { sessionCount: 0, userIds: new Set<string>() }
+    existing.sessionCount++
+    existing.userIds.add(String(item.userId))
+    map.set(date, existing)
+  }
+
+  // 按日期升序排序，确保折线图 X 轴时间顺序正确
+  return Array.from(map.entries())
+    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+    .map(([date, day]) => ({
+      date,
+      sessionCount: day.sessionCount,
+      userCount: day.userIds.size
+    }))
+}
+
+interface AggregateItem {
+  date: string
+  avgMoodScore: number
+  recordCount: number
+  sessionCount: number
+  userCount: number
+}
+
+/**
+ * 按日期聚合数据：计算每日平均值和记录数
+ * 用于情绪趋势图（valueField='moodScore' 时计算平均心情分数）
+ *
+ * 注意：返回值含 sessionCount/userCount 字段，但本函数实际只填 recordCount，
+ *       sessionCount/userCount 是为兼容接口字段保留，值为 recordCount 的复制
+ */
 function aggregateByDate(data: Array<{ createdAt: Date; [key: string]: any }>, valueField?: string): AggregateItem[] {
-  // 第一阶段：按天累加指定字段的和与记录数。
   const map = new Map<string, { sum: number; count: number }>()
+
   for (const item of data) {
     const date = new Date(item.createdAt).toISOString().split('T')[0]
     const existing = map.get(date) || { sum: 0, count: 0 }
@@ -255,7 +284,8 @@ function aggregateByDate(data: Array<{ createdAt: Date; [key: string]: any }>, v
     if (valueField) existing.sum += Number(item[valueField])
     map.set(date, existing)
   }
-  // 第二阶段：把累加结果转成图表数据，平均值保留一位小数。
+
+  // 平均值保留 1 位小数
   return Array.from(map.entries()).map(([date, { sum, count }]) => ({
     date,
     avgMoodScore: valueField ? Math.round((sum / count) * 10) / 10 : 0,
