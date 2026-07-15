@@ -2,12 +2,124 @@
   "topK": 5,
   "cases": [
     {
-      "question": "失眠了怎么办",
-      "expectedArticleIds": [4]
+      "question": "我晚上总是睡不着，躺很久也睡不着怎么办？",
+      "expectedArticleIds": [
+        4
+      ]
     },
     {
-      "question": "和舍友关系不好怎么办",
-      "expectedArticleIds": [5]
+      "question": "最近学习压力很大，感觉喘不过气，有什么缓解方法？",
+      "expectedArticleIds": [
+        6
+      ]
+    },
+    {
+      "question": "一考试就特别紧张，手心出汗，大脑空白怎么办？",
+      "expectedArticleIds": [
+        7
+      ]
+    },
+    {
+      "question": "我总觉得自己不够好，容易否定自己怎么办？",
+      "expectedArticleIds": [
+        8
+      ]
+    },
+    {
+      "question": "和室友关系不好，每天回宿舍都很压抑怎么办？",
+      "expectedArticleIds": [
+        5
+      ]
+    },
+    {
+      "question": "心情低落好几天，对什么都没兴趣了怎么办？",
+      "expectedArticleIds": [
+        9
+      ]
+    },
+    {
+      "question": "我很容易生气，事后又后悔，该怎么调节情绪？",
+      "expectedArticleIds": [
+        10
+      ]
+    },
+    {
+      "question": "经常担心还没发生的事情，停不下来怎么办？",
+      "expectedArticleIds": [
+        11
+      ]
+    },
+    {
+      "question": "分手后一直走不出来，影响学习怎么办？",
+      "expectedArticleIds": [
+        12
+      ]
+    },
+    {
+      "question": "如何判断自己是不是需要心理咨询？",
+      "expectedArticleIds": [
+        13
+      ]
+    },
+    {
+      "question": "睡前刷手机停不下来，影响睡眠怎么办？",
+      "expectedArticleIds": [
+        14
+      ]
+    },
+    {
+      "question": "和父母沟通总是吵架，有没有更好的沟通方法？",
+      "expectedArticleIds": [
+        15
+      ]
+    },
+    {
+      "question": "上台发言特别害怕，怎么练习会好一点？",
+      "expectedArticleIds": [
+        16
+      ]
+    },
+    {
+      "question": "情绪崩溃的时候可以做什么让自己先稳定下来？",
+      "expectedArticleIds": [
+        17
+      ]
+    },
+    {
+      "question": "如何做腹式呼吸放松？",
+      "expectedArticleIds": [
+        18
+      ]
+    },
+    {
+      "question": "最近总是拖延，明知道要学习还是做不到怎么办？",
+      "expectedArticleIds": [
+        19
+      ]
+    },
+    {
+      "question": "我觉得很孤独，没有朋友可以说话怎么办？",
+      "expectedArticleIds": [
+        20
+      ]
+    },
+    {
+      "question": "心理咨询会不会泄露隐私？",
+      "expectedArticleIds": [
+        21
+      ]
+    },
+    {
+      "question": "压力大时暴饮暴食，怎么调整？",
+      "expectedArticleIds": [
+        22
+      ]
+    },
+    {
+      "question": "怎样建立规律作息？",
+      "expectedArticleIds": [
+        23
+      ]
     }
   ]
 }

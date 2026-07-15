@@ -16,8 +16,19 @@ export interface RagReference {
 export async function retrieveKnowledge(query: string, topK = config.rag.topK): Promise<RagReference[]> {
   if (!query || !query.trim()) return []
 
-  const queryEmbedding = await createEmbedding(query.trim())
-  const vectorResults = await searchVectors(queryEmbedding, topK, config.rag.minScore)
+  let queryEmbedding: number[]
+  try {
+    queryEmbedding = await createEmbedding(query.trim())
+  } catch (e: any) {
+    throw new Error(`Embedding 服务调用失败: ${e.message}`)
+  }
+
+  let vectorResults: { id: string; score: number }[]
+  try {
+    vectorResults = await searchVectors(queryEmbedding, topK, config.rag.minScore)
+  } catch (e: any) {
+    throw new Error(`Qdrant 向量检索失败: ${e.message}`)
+  }
   const vectorIds = vectorResults.map((item) => String(item.id))
   if (vectorIds.length === 0) return []
 
