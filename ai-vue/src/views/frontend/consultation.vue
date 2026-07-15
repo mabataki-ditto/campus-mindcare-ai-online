@@ -27,6 +27,7 @@
       :attached-file="attachedFile"
       @new-session="createNewFrontendSession"
       @send="sendMessage"
+      @stop="cancelRequest"
       @update:user-message="userMessage = $event"
       @file-select="handleFileSelect"
       @file-remove="handleFileRemove"

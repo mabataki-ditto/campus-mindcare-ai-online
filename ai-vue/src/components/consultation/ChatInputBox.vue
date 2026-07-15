@@ -40,7 +40,8 @@
       style="display: none"
       @change="handleFileSelect"
     />
-    <el-button :disabled="!canSend" type="primary" class="send-btn" @click="$emit('send')">
+    <el-button v-if="disabled" type="danger" class="stop-btn" @click="$emit('stop')">停止生成</el-button>
+    <el-button v-else data-testid="send-message" :disabled="!canSend" type="primary" class="send-btn" @click="$emit('send')">
       <el-icon>
         <Promotion />
       </el-icon>
@@ -67,7 +68,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'send', 'file-select', 'file-remove'])
+const emit = defineEmits(['update:modelValue', 'send', 'stop', 'file-select', 'file-remove'])
 
 const fileInputRef = ref(null)
 
@@ -183,6 +184,11 @@ const removeFile = () => {
     box-shadow: 0 6px 20px rgba(251, 146, 60, 0.25);
     transition: all 0.3s ease;
   }
+
+  .stop-btn {
+    height: 60px;
+    border-radius: 16px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -192,6 +198,10 @@ const removeFile = () => {
     .send-btn {
       height: 48px;
       width: 48px;
+      border-radius: 12px;
+    }
+    .stop-btn {
+      height: 48px;
       border-radius: 12px;
     }
     .attach-btn {

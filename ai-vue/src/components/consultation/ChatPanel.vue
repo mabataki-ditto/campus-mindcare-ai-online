@@ -40,6 +40,7 @@
       :attached-file="attachedFile"
       @update:model-value="$emit('update:userMessage', $event)"
       @send="$emit('send')"
+      @stop="$emit('stop')"
       @file-select="$emit('file-select', $event)"
       @file-remove="$emit('file-remove')"
     />
@@ -98,7 +99,7 @@ defineProps({
   }
 })
 
-defineEmits(['new-session', 'send', 'update:userMessage', 'file-select', 'file-remove'])
+defineEmits(['new-session', 'send', 'stop', 'update:userMessage', 'file-select', 'file-remove'])
 </script>
 
 <style lang="scss" scoped>

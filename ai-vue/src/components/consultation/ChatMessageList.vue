@@ -52,6 +52,7 @@
             </span>
           </router-link>
         </div>
+        <div v-if="msg.isAborted" class="generation-stopped">已停止生成</div>
         <div class="message-time">{{ msg.senderType === 2 && isAiTyping ? '正在输入中...' : formatRelativeTime(msg.createdAt) }}</div>
       </div>
     </div>
@@ -220,6 +221,12 @@ watch(
         font-size: 12px;
         color: #999;
         margin-top: 4px;
+      }
+
+      .generation-stopped {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #909399;
       }
 
       .message-references {

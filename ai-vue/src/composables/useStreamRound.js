@@ -89,5 +89,9 @@ export async function streamRound({ allMessages, aiMessage, signal }) {
     }
   }
 
+  if (finishReason === null) {
+    throw new Error('流式响应意外中断，请重试')
+  }
+
   return { finalContent, finishReason, toolCallsMap }
 }

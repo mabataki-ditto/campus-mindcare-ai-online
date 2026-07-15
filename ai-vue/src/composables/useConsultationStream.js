@@ -39,6 +39,7 @@ const createAiMessage = () => ({
   senderType: 2,
   content: '',
   references: [],
+  isAborted: false,
   createdAt: new Date().toISOString()
 })
 
@@ -70,7 +71,7 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
   /** 构建发送给 DeepSeek API 的消息上下文 */
   const buildMessages = () => {
     const history = messages.value
-      .filter((msg) => msg.content && !msg.isError)
+      .filter((msg) => msg.content && !msg.isError && !msg.isAborted)
       .map((msg) => ({
         role: msg.senderType === 1 ? 'user' : 'assistant',
         content: msg.content
@@ -93,6 +94,10 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
 
   /** 中断当前请求 */
   const cancelRequest = () => {
+    if (isAiTyping.value) {
+      const aiMessage = [...messages.value].reverse().find((msg) => msg.senderType === 2)
+      if (aiMessage) aiMessage.isAborted = true
+    }
     if (abortController) {
       abortController.abort()
       abortController = null
@@ -144,6 +149,7 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
       if (err.name === 'AbortError') {
         isAiTyping.value = false
         toolCallStatus.value = ''
+        abortController = null
         return
       }
 
@@ -156,6 +162,8 @@ export function useConsultationStream({ currentSession, messages, getSessionPage
       abortController = null
       ElMessage.error(err.message || 'AI回复失败，请重试')
     }
+
+    abortController = null
   }
 
   const appendKnowledgeContext = async (allMessages, aiMessage) => {
