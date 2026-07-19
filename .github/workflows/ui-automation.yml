@@ -1,0 +1,144 @@
+name: UI automation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-automation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  layer1:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Python test dependencies
+        run: pip install -r tests/ui/requirements.txt
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Install frontend dependencies
+        working-directory: ai-vue
+        run: npm install --no-audit --no-fund
+      - name: Run Layer 1
+        run: pytest -m layer1 --alluredir=allure-results --clean-alluredir
+      - name: Generate Allure HTML
+        if: always()
+        run: npx --yes allure-commandline@2.43.0 generate allure-results -o allure-report --clean
+      - name: Upload Layer 1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-layer1-${{ github.run_id }}
+          path: |
+            allure-results
+            allure-report
+            test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+  layer2:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Python test dependencies
+        run: pip install -r tests/ui/requirements.txt
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Install frontend dependencies
+        working-directory: ai-vue
+        run: npm install --no-audit --no-fund
+      - name: Run Layer 2
+        run: pytest -m layer2 --alluredir=allure-results --clean-alluredir
+      - name: Remove test containers and volumes
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+      - name: Generate Allure HTML
+        if: always()
+        run: npx --yes allure-commandline@2.43.0 generate allure-results -o allure-report --clean
+      - name: Upload Layer 2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-layer2-${{ github.run_id }}
+          path: |
+            allure-results
+            allure-report
+            test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+  layer3:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUN_REAL_LLM: '1'
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      DEEPSEEK_BASE_URL: https://api.deepseek.com/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Python test dependencies
+        run: pip install -r tests/ui/requirements.txt
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Install frontend dependencies
+        working-directory: ai-vue
+        run: npm install --no-audit --no-fund
+      - name: Run Layer 3
+        run: pytest -m layer3 --alluredir=allure-results --clean-alluredir
+      - name: Remove test containers and volumes
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+      - name: Generate Allure HTML
+        if: always()
+        run: npx --yes allure-commandline@2.43.0 generate allure-results -o allure-report --clean
+      - name: Upload Layer 3 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-layer3-${{ github.run_id }}
+          path: |
+            allure-results
+            allure-report
+            test-results
+          if-no-files-found: warn
+          retention-days: 7

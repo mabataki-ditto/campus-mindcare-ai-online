@@ -10,6 +10,9 @@
 # 依赖
 node_modules/
 package-lock.json
+.venv/
+__pycache__/
+.pytest_cache/
 
 # 构建产物
 dist/
@@ -22,6 +25,11 @@ uploads/
 # 日志
 *.log
 npm-debug.log*
+
+# UI 自动化测试产物
+allure-results/
+allure-report/
+test-results/
 
 # IDE
 .vscode/

@@ -1,0 +1,30 @@
+FROM node:24-alpine AS build
+WORKDIR /app
+
+COPY package.json ./
+RUN npm install
+
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+ENV DATABASE_URL="mysql://root:password@localhost:3306/campus_mindcare_test"
+RUN npx prisma generate
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+RUN npx tsc prisma/seed.ts --outDir dist/prisma --module Node16 --target ES2020 --esModuleInterop --skipLibCheck --moduleResolution node16 --types node --ignoreConfig
+
+FROM node:24-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=test
+ENV DATABASE_URL="mysql://root:password@localhost:3306/campus_mindcare_test"
+
+COPY package.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npm install --omit=dev && npx prisma generate && npm cache clean --force
+
+COPY --from=build /app/dist ./dist
+
+EXPOSE 3000
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,72 @@
+name: campus-mindcare-ui-test
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ui_test_password
+      MYSQL_DATABASE: campus_mindcare_test
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - ui_test_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mock-deepseek:
+    image: node:24-alpine
+    working_dir: /app
+    command: ["node", "mock-deepseek.cjs"]
+    volumes:
+      - ./tests/ui/support/mock-deepseek.cjs:/app/mock-deepseek.cjs:ro
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  deepseek-guard:
+    image: node:24-alpine
+    working_dir: /app
+    command: ["node", "deepseek-guard.cjs"]
+    environment:
+      DEEPSEEK_UPSTREAM_BASE_URL: ${TEST_DEEPSEEK_UPSTREAM_BASE_URL:-http://mock-deepseek:3100/v1}
+    volumes:
+      - ./tests/ui/support/deepseek-guard.cjs:/app/deepseek-guard.cjs:ro
+    ports:
+      - "127.0.0.1:3200:3200"
+
+  backend:
+    build:
+      context: ./ai-psychological-server
+      dockerfile: Dockerfile.test
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mock-deepseek:
+        condition: service_started
+      deepseek-guard:
+        condition: service_started
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: root
+      DATABASE_PASSWORD: ui_test_password
+      DATABASE_NAME: campus_mindcare_test
+      DATABASE_URL: mysql://root:ui_test_password@mysql:3306/campus_mindcare_test
+      JWT_SECRET: campus-mindcare-ui-test-only-jwt-secret
+      DEEPSEEK_API_KEY: ${TEST_DEEPSEEK_API_KEY:-ui-test-key}
+      DEEPSEEK_BASE_URL: ${TEST_DEEPSEEK_BASE_URL:-http://mock-deepseek:3100/v1}
+      DEEPSEEK_MODEL: deepseek-chat
+      EMBEDDING_API_KEY: ""
+      EMBEDDING_BASE_URL: ""
+      EMBEDDING_MODEL: ""
+      QDRANT_URL: http://unused-qdrant:6333
+    ports:
+      - "127.0.0.1:3001:3000"
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/index.js"
+
+volumes:
+  ui_test_mysql_data:
