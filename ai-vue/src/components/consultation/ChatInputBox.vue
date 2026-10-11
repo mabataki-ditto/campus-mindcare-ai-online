@@ -79,7 +79,9 @@ const canSend = computed(() => {
 const handleKeyDown = (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
-    emit('send')
+    if (canSend.value) {
+      emit('send')
+    }
   }
 }
 
