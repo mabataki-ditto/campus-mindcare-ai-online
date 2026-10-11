@@ -9,7 +9,6 @@
 
 # 依赖
 node_modules/
-package-lock.json
 .venv/
 __pycache__/
 .pytest_cache/
@@ -30,6 +29,7 @@ npm-debug.log*
 allure-results/
 allure-report/
 test-results/
+/outputs/
 
 # IDE
 .vscode/
@@ -44,6 +44,9 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# 固件第三方库压缩包（可由 Arduino 库管理器重新获取）
+firmware/_libs_tmp/
 
 # 文档
 /docs
