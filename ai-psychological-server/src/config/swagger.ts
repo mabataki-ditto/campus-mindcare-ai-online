@@ -1,5 +1,10 @@
 import swaggerJsdoc from 'swagger-jsdoc'
+import path from 'path'
 import { config } from './index'
+
+const swaggerDocsPath = path
+  .resolve(__dirname, '..', 'docs', 'swagger', `**/*${path.extname(__filename)}`)
+  .replace(/\\/g, '/')
 
 // OpenAPI 全局配置。具体接口说明集中放在 src/docs/swagger/**/*.ts。
 const options: swaggerJsdoc.Options = {
@@ -127,7 +132,7 @@ const options: swaggerJsdoc.Options = {
     security: [{ bearerAuth: [] }]
   },
   // 扫描这些文件中的 JSDoc @swagger 注释。
-  apis: ['./src/docs/swagger/**/*.ts']
+  apis: [swaggerDocsPath]
 }
 
 // 生成后的 OpenAPI 文档对象，供 /api-docs 和 /api-docs.json 使用。
