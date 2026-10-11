@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 
 const ICON_SIZE = 81;
-const OUTPUT_DIR = path.join(__dirname, 'src', 'static', 'icons');
+const OUTPUT_DIR = path.join(__dirname, '..', 'src', 'static', 'icons');
 
 // 颜色配置
 const COLORS = {
