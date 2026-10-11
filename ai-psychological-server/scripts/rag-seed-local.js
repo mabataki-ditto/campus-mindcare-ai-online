@@ -3,7 +3,7 @@ const path = require('path')
 const { cases } = require('./rag-eval-dataset')
 
 const BASE_URL = 'http://localhost:3000/api'
-const EVAL_PATH = path.resolve(__dirname, '..', '..', 'eval.json')
+const EVAL_PATH = path.resolve(__dirname, '..', 'outputs', 'rag', 'eval.json')
 
 async function request(pathname, options = {}) {
   const response = await fetch(`${BASE_URL}${pathname}`, {
@@ -74,6 +74,7 @@ async function main() {
     })
   }
 
+  fs.mkdirSync(path.dirname(EVAL_PATH), { recursive: true })
   fs.writeFileSync(
     EVAL_PATH,
     `${JSON.stringify({ topK: 5, cases: evalCases }, null, 2)}\n`,

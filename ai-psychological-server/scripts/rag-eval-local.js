@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const BASE_URL = 'http://localhost:3000/api'
-const EVAL_PATH = path.resolve(__dirname, '..', '..', 'eval.json')
+const EVAL_PATH = path.resolve(__dirname, '..', 'outputs', 'rag', 'eval.json')
 
 async function request(pathname, options = {}) {
   const response = await fetch(`${BASE_URL}${pathname}`, {
